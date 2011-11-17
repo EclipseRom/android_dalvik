@@ -3603,7 +3603,12 @@ static bool handleExecuteInlineC(CompilationUnit *cUnit, MIR *mir)
     int operation = dInsn->vB;
     unsigned int i;
     const InlineOperation* inLineTable = dvmGetInlineOpsTable();
-    uintptr_t fn = (int) inLineTable[operation].func;
+    uintptr_t fn = 0;
+    if (operation < INLINE_EX_START) {
+        fn = (int) inLineTable[operation].func;
+    } else {
+        fn = (int)dvmInlineOpsExFunc(operation);
+    }
     if (fn == 0) {
         dvmCompilerAbort(cUnit);
     }
@@ -3713,6 +3718,9 @@ static bool handleExecuteInline(CompilationUnit *cUnit, MIR *mir)
         case INLINE_FLOAT_TO_INT_BITS:
         case INLINE_DOUBLE_TO_LONG_BITS:
             return handleExecuteInlineC(cUnit, mir);
+    }
+    if (dvmInlineOpsExVerify(dInsn->vB)) {
+        return handleExecuteInlineC(cUnit, mir);
     }
     dvmCompilerAbort(cUnit);
     return false; // Not reachable; keeps compiler happy.

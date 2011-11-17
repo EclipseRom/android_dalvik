@@ -585,6 +585,7 @@ struct DvmGlobals {
 
     /* inline substitution table, used during optimization */
     InlineSub*          inlineSubs;
+    InlineSub*          inlineSubsEx;
 
     /*
      * Bootstrap class loader linear allocator.

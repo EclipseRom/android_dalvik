@@ -60,7 +60,7 @@ static bool needsReturnBarrier(Method* method);
 bool dvmCreateInlineSubsTable()
 {
     const InlineOperation* ops = dvmGetInlineOpsTable();
-    const int count = dvmGetInlineOpsTableLength();
+    int count = dvmGetInlineOpsTableLength();
     InlineSub* table;
     int i, tableIndex;
 
@@ -95,6 +95,48 @@ bool dvmCreateInlineSubsTable()
     table[tableIndex].method = NULL;
 
     gDvm.inlineSubs = table;
+
+
+    /* Generate inline extension table if it exists */
+    gDvm.inlineSubsEx = NULL;
+    count = 0;
+    ops = dvmGetInlineOpsTableEx(&count);
+    if (!ops || !count) {
+        return true;
+    }
+
+    /*
+     * One slot per entry, plus an end-of-list marker.
+     */
+    table = (InlineSub*) calloc(count + 1, sizeof(InlineSub));
+
+    tableIndex = 0;
+    for (i = 0; i < count; i++) {
+        Method* method = dvmFindInlinableMethod(ops[i].classDescriptor,
+            ops[i].methodName, ops[i].methodSignature);
+        if (method == NULL) {
+            /*
+             * Not expected.
+             * Ignore all extensions
+             */
+            ALOGE("Unable to find method for inlining: %s.%s:%s",
+                ops[i].classDescriptor, ops[i].methodName,
+                ops[i].methodSignature);
+
+            free(table);
+            return true;
+        }
+
+        table[tableIndex].method = method;
+        table[tableIndex].inlineIdx = i + INLINE_EX_START;
+        tableIndex++;
+    }
+
+    /* mark end of table */
+    table[tableIndex].method = NULL;
+
+    gDvm.inlineSubsEx = table;
+
     return true;
 }
 
@@ -1054,6 +1096,7 @@ static bool rewriteExecuteInline(Method* method, u2* insns,
     ClassObject* clazz = method->clazz;
     Method* calledMethod;
     u2 methodIdx = insns[1];
+    int inInlineSubsEx = 0;
 
     //return false;
 
@@ -1063,6 +1106,7 @@ static bool rewriteExecuteInline(Method* method, u2* insns,
         return false;
     }
 
+process:
     while (inlineSubs->method != NULL) {
         /*
         if (extra) {
@@ -1089,6 +1133,12 @@ static bool rewriteExecuteInline(Method* method, u2* insns,
         inlineSubs++;
     }
 
+    if (!inInlineSubsEx && gDvm.inlineSubsEx) {
+        inInlineSubsEx = 1;
+        inlineSubs = gDvm.inlineSubsEx;
+        goto process;
+    }
+
     return false;
 }
 
@@ -1105,6 +1155,7 @@ static bool rewriteExecuteInlineRange(Method* method, u2* insns,
     ClassObject* clazz = method->clazz;
     Method* calledMethod;
     u2 methodIdx = insns[1];
+    int inInlineSubsEx = 0;
 
     calledMethod = dvmOptResolveMethod(clazz, methodIdx, methodType, NULL);
     if (calledMethod == NULL) {
@@ -1112,6 +1163,7 @@ static bool rewriteExecuteInlineRange(Method* method, u2* insns,
         return false;
     }
 
+process:
     while (inlineSubs->method != NULL) {
         if (inlineSubs->method == calledMethod) {
             assert((insns[0] & 0xff) == OP_INVOKE_DIRECT_RANGE ||
@@ -1129,6 +1181,11 @@ static bool rewriteExecuteInlineRange(Method* method, u2* insns,
         inlineSubs++;
     }
 
+    if (!inInlineSubsEx && gDvm.inlineSubsEx) {
+        inInlineSubsEx = 1;
+        inlineSubs = gDvm.inlineSubsEx;
+        goto process;
+    }
     return false;
 }
 

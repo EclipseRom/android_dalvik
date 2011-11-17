@@ -806,6 +806,25 @@ int dvmGetInlineOpsTableLength()
 {
     return NELEM(gDvmInlineOpsTable);
 }
+extern "C"  {
+/*
+ * Inline ops extension.
+ */
+__attribute__((weak)) InlineOperation* dvmGetInlineOpsTableEx(int *length)
+{
+    if (length)
+        *length = 0;
+    return NULL;
+}
+__attribute__((weak)) InlineOp4Func dvmInlineOpsExFunc(int opcode)
+{
+    return NULL;
+}
+__attribute__((weak)) int dvmInlineOpsExVerify(int opcode)
+{
+    return 0;
+}
+}
 
 Method* dvmFindInlinableMethod(const char* classDescriptor,
     const char* methodName, const char* methodSignature)
@@ -866,6 +885,10 @@ Method* dvmFindInlinableMethod(const char* classDescriptor,
  */
 Method* dvmResolveInlineNative(int opIndex)
 {
+    if (opIndex >= INLINE_EX_START) {
+        return NULL;
+    }
+
     assert(opIndex >= 0 && opIndex < NELEM(gDvmInlineOpsTable));
     Method* method = gDvm.inlinedMethods[opIndex];
     if (method != NULL) {
@@ -902,6 +925,9 @@ bool dvmPerformInlineOp4Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
 {
     Method* method = dvmResolveInlineNative(opIndex);
     if (method == NULL) {
+        if (opIndex >= INLINE_EX_START)
+            return (*dvmInlineOpsExFunc(opIndex))(arg0, arg1, arg2, arg3, pResult);
+
         return (*gDvmInlineOpsTable[opIndex].func)(arg0, arg1, arg2, arg3,
             pResult);
     }
@@ -920,6 +946,11 @@ bool dvmPerformInlineOp5Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
 {
     Method* method = dvmResolveInlineNative(opIndex);
     if (method == NULL) {
+        if (opIndex >= INLINE_EX_START)
+            return ((InlineOp5Func)(*dvmInlineOpsExFunc(opIndex)))(arg0, arg1, arg2, arg3,
+                pResult, arg4);
+
+
         return ((InlineOp5Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
             pResult, arg4);
     }

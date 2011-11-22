@@ -1485,6 +1485,7 @@ static bool compileLoop(CompilationUnit *cUnit, unsigned int startOffset,
 
     /* Initialize the PC reconstruction list */
     dvmInitGrowableList(&cUnit->pcReconstructionList, 8);
+    dvmInitGrowableList(&cUnit->pcReconstructionListExtended, 1);
 
     /* Create the default entry and exit blocks and enter them to the list */
     BasicBlock *entryBlock = dvmCompilerNewBB(kEntryBlock, numBlocks++);
@@ -1709,6 +1710,7 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
     /* Initialize the PC reconstruction list */
     dvmInitGrowableList(&cUnit.pcReconstructionList, 8);
 
+    dvmInitGrowableList(&cUnit.pcReconstructionListExtended, 1);
     /* Initialize the basic block list */
     blockList = &cUnit.blockList;
     dvmInitGrowableList(blockList, 8);

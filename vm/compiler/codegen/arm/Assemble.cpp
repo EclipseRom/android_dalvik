@@ -1302,10 +1302,10 @@ static inline u4 getChainCellSize(const ChainCellCounts* pChainCellCounts)
     for (i = 0; i < kChainingCellGap; i++) {
         if (i != kChainingCellInvokePredicted) {
             cellSize += pChainCellCounts->u.count[i] *
-                        (CHAIN_CELL_NORMAL_SIZE >> 2);
+                        ((CHAIN_CELL_NORMAL_SIZE >> 2)+pChainCellCounts->extraSize);
         } else {
             cellSize += pChainCellCounts->u.count[i] *
-                (CHAIN_CELL_PREDICTED_SIZE >> 2);
+                ((CHAIN_CELL_PREDICTED_SIZE >> 2)+pChainCellCounts->extraSize);
         }
     }
     return cellSize;
@@ -1526,6 +1526,9 @@ void dvmCompilerAssembleLIR(CompilationUnit *cUnit, JitTranslationInfo *info)
 
         /* Set the gap number in the chaining cell count structure */
         chainCellCounts.u.count[kChainingCellGap] = chainingCellGap;
+
+        assert((cUnit->chainingCellExtraSize & 0x3) ==0);
+        chainCellCounts.extraSize = cUnit->chainingCellExtraSize >> 2;
 
         memcpy((char*)cUnit->baseAddr + chainCellOffset, &chainCellCounts,
                sizeof(chainCellCounts));
@@ -1922,6 +1925,7 @@ static u4* unchainSingle(JitEntry *trace)
         }
 
         for (j = 0; j < pChainCellCounts->u.count[i]; j++) {
+            pChainCells += pChainCellCounts->extraSize;
             switch(i) {
                 case kChainingCellNormal:
                 case kChainingCellHot:
@@ -2204,13 +2208,14 @@ static void findClassPointersSingleTrace(char *base, void (*callback)(void *))
              chainTypeIdx++) {
             if (chainTypeIdx != kChainingCellInvokePredicted) {
                 /* In 32-bit words */
-                pChainCells += (CHAIN_CELL_NORMAL_SIZE >> 2) *
+                pChainCells += ((CHAIN_CELL_NORMAL_SIZE >> 2)+pChainCellCounts->extraSize) *
                     pChainCellCounts->u.count[chainTypeIdx];
                 continue;
             }
             for (chainIdx = 0;
                  chainIdx < pChainCellCounts->u.count[chainTypeIdx];
                  chainIdx++) {
+                pChainCells += pChainCellCounts->extraSize;
                 PredictedChainingCell *cell =
                     (PredictedChainingCell *) pChainCells;
                 /*

@@ -316,6 +316,7 @@ typedef enum ArmConditionCode {
  * Assemble.c.
  */
 typedef enum ArmOpcode {
+    kArmPseudoPCReconstructionCellExtended = -19,       /* pcReconstruction for extended MIR*/
     kArmChainingCellBottom = -18,
     kArmPseudoBarrier = -17,
     kArmPseudoExtended = -16,

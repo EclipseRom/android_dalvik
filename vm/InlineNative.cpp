@@ -913,3 +913,23 @@ bool dvmPerformInlineOp4Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     TRACE_METHOD_EXIT(self, method);
     return result;
 }
+
+#ifdef INLINE_ARG5
+bool dvmPerformInlineOp5Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
+    JValue* pResult, int opIndex, u4 arg4)
+{
+    Method* method = dvmResolveInlineNative(opIndex);
+    if (method == NULL) {
+        return ((InlineOp5Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
+            pResult, arg4);
+    }
+
+    Thread* self = dvmThreadSelf();
+    TRACE_METHOD_ENTER(self, method);
+    bool result = ((InlineOp5Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
+        pResult, arg4);
+    TRACE_METHOD_EXIT(self, method);
+    return result;
+}
+#endif
+

@@ -3613,12 +3613,29 @@ static bool handleExecuteInlineC(CompilationUnit *cUnit, MIR *mir)
     dvmCompilerClobber(cUnit, r7);
     int offset = offsetof(Thread, interpSave.retval);
     opRegRegImm(cUnit, kOpAdd, r4PC, r6SELF, offset);
+#ifdef INLINE_ARG5
+            if( dInsn->vA == 5 ){
+                loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, 4), r7);
+            }
+#endif
     opImm(cUnit, kOpPush, (1<<r4PC) | (1<<r7));
     LOAD_FUNC_ADDR(cUnit, r4PC, fn);
     genExportPC(cUnit, mir);
+#ifdef INLINE_ARG5
+            if( dInsn->vA == 5 ){
+                for (i=0; i < 4; i++) {
+                    loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, i), i);
+                }
+            } else {
+                for (i=0; i < dInsn->vA; i++) {
+                    loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, i), i);
+                }
+            }
+#else
     for (i=0; i < dInsn->vA; i++) {
         loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, i), i);
     }
+#endif
     opReg(cUnit, kOpBlx, r4PC);
     opRegImm(cUnit, kOpAdd, r13sp, 8);
     /* NULL? */

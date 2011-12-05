@@ -284,6 +284,7 @@ typedef struct CompilationUnit {
     bool printSSANames;
     void *blockLabelList;
     bool quitLoopMode;                  // cold path/complex bytecode
+    void *labelList;
 
 } CompilationUnit;
 

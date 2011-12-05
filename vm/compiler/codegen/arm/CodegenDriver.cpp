@@ -4272,11 +4272,23 @@ __attribute__((weak)) void dvmCompilerCheckStats(CompilationUnit *cUnit)
     }
 }
 
+__attribute__((weak)) void dvmCompilerCheckBlockStats(CompilationUnit *cUnit, BasicBlock *bb)
+{
+    if(cUnit->printMe){
+        ALOGV("Current block:%d",bb->id);
+        if(bb->taken)
+            ALOGV("Next taken block:%d", bb->taken->id);
+        if(bb->fallThrough)
+            ALOGV("Next fallThrough block:%d",bb->fallThrough->id);
+    }
+}
+
 void dvmCompilerMIR2LIR(CompilationUnit *cUnit)
 {
     /* Used to hold the labels of each block */
-    ArmLIR *labelList =
-        (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR) * cUnit->numBlocks, true);
+    cUnit->labelList =
+        (void *) dvmCompilerNew(sizeof(ArmLIR) * cUnit->numBlocks, true);
+    ArmLIR *labelList = (ArmLIR *)(cUnit->labelList);
     ArmLIR *headLIR = NULL;
     int i;
 
@@ -4584,6 +4596,7 @@ void dvmCompilerMIR2LIR(CompilationUnit *cUnit)
                     break;
                 }
             }
+            dvmCompilerCheckBlockStats(cUnit,bb);
         }
 
         if (bb->blockType == kEntryBlock) {

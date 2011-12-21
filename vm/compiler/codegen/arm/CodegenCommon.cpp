@@ -36,7 +36,7 @@ static void setMemRefType(ArmLIR *lir, bool isLoad, int memType)
 {
     u8 *maskPtr;
     u8 mask = ENCODE_MEM;;
-    assert(EncodingMap[lir->opcode].flags & (IS_LOAD | IS_STORE));
+    assert(getEncoding(lir->opcode)->flags & (IS_LOAD | IS_STORE));
     if (isLoad) {
         maskPtr = &lir->useMask;
     } else {
@@ -58,7 +58,7 @@ static void setMemRefType(ArmLIR *lir, bool isLoad, int memType)
             break;
         case kMustNotAlias:
             /* Currently only loads can be marked as kMustNotAlias */
-            assert(!(EncodingMap[lir->opcode].flags & IS_STORE));
+            assert(!(getEncoding(lir->opcode)->flags & IS_STORE));
             *maskPtr |= ENCODE_MUST_NOT_ALIAS;
             break;
         default:
@@ -133,7 +133,7 @@ static void setupResourceMasks(ArmLIR *lir)
         return;
     }
 
-    flags = EncodingMap[lir->opcode].flags;
+    flags = getEncoding(lir->opcode)->flags;
 
     /* Set up the mask for resources that are updated */
     if (flags & (IS_LOAD | IS_STORE)) {
@@ -231,7 +231,7 @@ static void setupResourceMasks(ArmLIR *lir)
  */
 static void relaxBranchMasks(ArmLIR *lir)
 {
-    int flags = EncodingMap[lir->opcode].flags;
+    int flags = getEncoding(lir->opcode)->flags;
 
     /* Make sure only branch instructions are passed here */
     assert(flags & IS_BRANCH);
@@ -264,7 +264,7 @@ static void relaxBranchMasks(ArmLIR *lir)
 static ArmLIR *newLIR0(CompilationUnit *cUnit, ArmOpcode opcode)
 {
     ArmLIR *insn = (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR), true);
-    assert(isPseudoOpcode(opcode) || (EncodingMap[opcode].flags & NO_OPERAND));
+    assert(isPseudoOpcode(opcode) || (getEncoding(opcode)->flags & NO_OPERAND));
     insn->opcode = opcode;
     setupResourceMasks(insn);
     dvmCompilerAppendLIR(cUnit, (LIR *) insn);
@@ -275,7 +275,7 @@ static ArmLIR *newLIR1(CompilationUnit *cUnit, ArmOpcode opcode,
                            int dest)
 {
     ArmLIR *insn = (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR), true);
-    assert(isPseudoOpcode(opcode) || (EncodingMap[opcode].flags & IS_UNARY_OP));
+    assert(isPseudoOpcode(opcode) || (getEncoding(opcode)->flags & IS_UNARY_OP));
     insn->opcode = opcode;
     insn->operands[0] = dest;
     setupResourceMasks(insn);
@@ -288,7 +288,7 @@ static ArmLIR *newLIR2(CompilationUnit *cUnit, ArmOpcode opcode,
 {
     ArmLIR *insn = (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR), true);
     assert(isPseudoOpcode(opcode) ||
-           (EncodingMap[opcode].flags & IS_BINARY_OP));
+           (getEncoding(opcode)->flags & IS_BINARY_OP));
     insn->opcode = opcode;
     insn->operands[0] = dest;
     insn->operands[1] = src1;
@@ -301,11 +301,11 @@ static ArmLIR *newLIR3(CompilationUnit *cUnit, ArmOpcode opcode,
                            int dest, int src1, int src2)
 {
     ArmLIR *insn = (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR), true);
-    if (!(EncodingMap[opcode].flags & IS_TERTIARY_OP)) {
+    if (!(getEncoding(opcode)->flags & IS_TERTIARY_OP)) {
         ALOGE("Bad LIR3: %s[%d]",EncodingMap[opcode].name,opcode);
     }
     assert(isPseudoOpcode(opcode) ||
-           (EncodingMap[opcode].flags & IS_TERTIARY_OP));
+           (getEncoding(opcode)->flags & IS_TERTIARY_OP));
     insn->opcode = opcode;
     insn->operands[0] = dest;
     insn->operands[1] = src1;
@@ -317,11 +317,11 @@ static ArmLIR *newLIR3(CompilationUnit *cUnit, ArmOpcode opcode,
 
 #if defined(_ARMV7_A) || defined(_ARMV7_A_NEON)
 static ArmLIR *newLIR4(CompilationUnit *cUnit, ArmOpcode opcode,
-                           int dest, int src1, int src2, int info)
+                       int dest, int src1, int src2, int info)
 {
     ArmLIR *insn = (ArmLIR *) dvmCompilerNew(sizeof(ArmLIR), true);
     assert(isPseudoOpcode(opcode) ||
-           (EncodingMap[opcode].flags & IS_QUAD_OP));
+           (getEncoding(opcode)->flags & IS_QUAD_OP));
     insn->opcode = opcode;
     insn->operands[0] = dest;
     insn->operands[1] = src1;

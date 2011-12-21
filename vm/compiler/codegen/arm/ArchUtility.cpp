@@ -291,12 +291,26 @@ void dvmDumpResourceMask(LIR *lir, u8 mask, const char *prefix)
 #define DUMP_RESOURCE_MASK(X)
 #define DUMP_SSA_REP(X)
 
+/*
+ * Decodes generic ARM opcodes
+ */
+static void printDefaultInstr(ArmLIR *lir, unsigned char *baseAddr)
+{
+    char buf[256];
+    char opName[256];
+    int  offset = lir->generic.offset;
+
+    buildInsnString(getEncoding(lir->opcode)->name, lir, opName, baseAddr, 256);
+    buildInsnString(getEncoding(lir->opcode)->fmt,  lir, buf,    baseAddr, 256);
+    ALOGD("%p (%04x): %-8s%s%s",
+         baseAddr + offset, offset, opName, buf,
+         lir->flags.isNop ? "(nop)" : "");
+}
+
 /* Pretty-print a LIR instruction */
 void dvmDumpLIRInsn(LIR *arg, unsigned char *baseAddr)
 {
     ArmLIR *lir = (ArmLIR *) arg;
-    char buf[256];
-    char opName[256];
     int offset = lir->generic.offset;
     int dest = lir->operands[0];
     const bool dumpNop = false;
@@ -372,13 +386,7 @@ void dvmDumpLIRInsn(LIR *arg, unsigned char *baseAddr)
             if (lir->flags.isNop && !dumpNop) {
                 break;
             }
-            buildInsnString(EncodingMap[lir->opcode].name, lir, opName,
-                            baseAddr, 256);
-            buildInsnString(EncodingMap[lir->opcode].fmt, lir, buf, baseAddr,
-                            256);
-            ALOGD("%p (%04x): %-8s%s%s",
-                 baseAddr + offset, offset, opName, buf,
-                 lir->flags.isNop ? "(nop)" : "");
+            printDefaultInstr(lir, baseAddr);
             break;
     }
 

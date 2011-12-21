@@ -924,6 +924,17 @@ static void installLiteralPools(CompilationUnit *cUnit)
 }
 
 /*
+ * Return the encoding map for the specified ARM opcode
+ */
+__attribute__((weak)) ArmEncodingMap* getEncoding(ArmOpcode opcode) {
+    if (opcode > kThumbUndefined) {
+        opcode = kThumbUndefined;
+    }
+    ArmEncodingMap* encoder = &EncodingMap[opcode];
+    return encoder;
+}
+
+/*
  * Assemble the LIR into binary instruction format.  Note that we may
  * discover that pc-relative displacements may not fit the selected
  * instruction.  In those cases we will try to substitute a new code
@@ -1068,7 +1079,7 @@ static AssemblerStatus assembleInstructions(CompilationUnit *cUnit,
             NEXT_LIR(lir)->operands[0] = (delta>> 1) & 0x7ff;
         }
 
-        ArmEncodingMap *encoder = &EncodingMap[lir->opcode];
+        ArmEncodingMap* encoder = getEncoding(lir->opcode);
         u4 bits = encoder->skeleton;
         int i;
         for (i = 0; i < 4; i++) {
@@ -1373,7 +1384,7 @@ void dvmCompilerAssembleLIR(CompilationUnit *cUnit, JitTranslationInfo *info)
          armLIR = NEXT_LIR(armLIR)) {
         armLIR->generic.offset = offset;
         if (armLIR->opcode >= 0 && !armLIR->flags.isNop) {
-            armLIR->flags.size = EncodingMap[armLIR->opcode].size * 2;
+            armLIR->flags.size = getEncoding(armLIR->opcode)->size * 2;
             offset += armLIR->flags.size;
         } else if (armLIR->opcode == kArmPseudoPseudoAlign4) {
             if (offset & 0x2) {
@@ -1553,7 +1564,7 @@ void dvmCompilerAssembleLIR(CompilationUnit *cUnit, JitTranslationInfo *info)
  */
 static u4 getSkeleton(ArmOpcode op)
 {
-    return EncodingMap[op].skeleton;
+    return getEncoding(op)->skeleton;
 }
 
 static u4 assembleChainingBranch(int branchOffset, bool thumbTarget)

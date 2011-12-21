@@ -404,14 +404,14 @@ static ArmLIR *opRegRegShift(CompilationUnit *cUnit, OpKind op, int rDestSrc1,
             break;
     }
     assert(opcode >= 0);
-    if (EncodingMap[opcode].flags & IS_BINARY_OP)
+    if (getEncoding(opcode)->flags & IS_BINARY_OP)
         return newLIR2(cUnit, opcode, rDestSrc1, rSrc2);
-    else if (EncodingMap[opcode].flags & IS_TERTIARY_OP) {
-        if (EncodingMap[opcode].fieldLoc[2].kind == kFmtShift)
+    else if (getEncoding(opcode)->flags & IS_TERTIARY_OP) {
+        if (getEncoding(opcode)->fieldLoc[2].kind == kFmtShift)
             return newLIR3(cUnit, opcode, rDestSrc1, rSrc2, shift);
         else
             return newLIR3(cUnit, opcode, rDestSrc1, rDestSrc1, rSrc2);
-    } else if (EncodingMap[opcode].flags & IS_QUAD_OP)
+    } else if (getEncoding(opcode)->flags & IS_QUAD_OP)
         return newLIR4(cUnit, opcode, rDestSrc1, rDestSrc1, rSrc2, shift);
     else {
         assert(0);
@@ -481,10 +481,10 @@ static ArmLIR *opRegRegRegShift(CompilationUnit *cUnit, OpKind op,
             break;
     }
     assert(opcode >= 0);
-    if (EncodingMap[opcode].flags & IS_QUAD_OP)
+    if (getEncoding(opcode)->flags & IS_QUAD_OP)
         return newLIR4(cUnit, opcode, rDest, rSrc1, rSrc2, shift);
     else {
-        assert(EncodingMap[opcode].flags & IS_TERTIARY_OP);
+        assert(getEncoding(opcode)->flags & IS_TERTIARY_OP);
         return newLIR3(cUnit, opcode, rDest, rSrc1, rSrc2);
     }
 }
@@ -608,7 +608,7 @@ static ArmLIR *opRegRegImm(CompilationUnit *cUnit, OpKind op, int rDest,
     } else {
         int rScratch = dvmCompilerAllocTemp(cUnit);
         loadConstant(cUnit, rScratch, value);
-        if (EncodingMap[altOpcode].flags & IS_QUAD_OP)
+        if (getEncoding(altOpcode)->flags & IS_QUAD_OP)
             res = newLIR4(cUnit, altOpcode, rDest, rSrc1, rScratch, 0);
         else
             res = newLIR3(cUnit, altOpcode, rDest, rSrc1, rScratch);

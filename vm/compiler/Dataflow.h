@@ -125,4 +125,6 @@ typedef struct ArrayAccessInfo {
 #define DECODE_REG(v)                   (v & 0xffff)
 #define DECODE_SUB(v)                   (((unsigned int) v) >> 16)
 
+extern int dvmGetDexOptAttributes(int opcode);
+
 #endif  // DALVIK_VM_DATAFLOW_H_

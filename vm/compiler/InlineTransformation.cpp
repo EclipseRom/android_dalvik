@@ -69,7 +69,7 @@ static bool inlineGetter(CompilationUnit *cUnit,
         return false;
     }
 
-    int dfFlags = dvmCompilerDataFlowAttributes[getterInsn.opcode];
+    int dfFlags = dvmGetDexOptAttributes(getterInsn.opcode);
 
     /* Expecting vA to be the destination register */
     if (dfFlags & (DF_UA | DF_UA_WIDE)) {
@@ -156,7 +156,7 @@ static bool inlineSetter(CompilationUnit *cUnit,
     if (!dvmCompilerCanIncludeThisInstruction(calleeMethod, &setterInsn))
         return false;
 
-    int dfFlags = dvmCompilerDataFlowAttributes[setterInsn.opcode];
+    int dfFlags = dvmGetDexOptAttributes(setterInsn.opcode);
 
     if (dfFlags & (DF_UA | DF_UA_WIDE)) {
         setterInsn.vA = convertRegId(&invokeMIR->dalvikInsn, calleeMethod,

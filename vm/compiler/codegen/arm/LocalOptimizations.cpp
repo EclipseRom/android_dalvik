@@ -101,12 +101,12 @@ static void applyLoadStoreElimination(CompilationUnit *cUnit,
         /* Skip non-interesting instructions */
         if ((thisLIR->flags.isNop == true) ||
             isPseudoOpcode(thisLIR->opcode) ||
-            !(EncodingMap[thisLIR->opcode].flags & (IS_LOAD | IS_STORE))) {
+            !(getEncoding(thisLIR->opcode)->flags & (IS_LOAD | IS_STORE))) {
             continue;
         }
 
         int nativeRegId = thisLIR->operands[0];
-        bool isThisLIRLoad = EncodingMap[thisLIR->opcode].flags & IS_LOAD;
+        bool isThisLIRLoad = getEncoding(thisLIR->opcode)->flags & IS_LOAD;
         ArmLIR *checkLIR;
         /* Use the mem mask to determine the rough memory location */
         u8 thisMemMask = (thisLIR->useMask | thisLIR->defMask) & ENCODE_MEM;
@@ -146,14 +146,14 @@ static void applyLoadStoreElimination(CompilationUnit *cUnit,
              * Potential aliases seen - check the alias relations
              */
             if (checkMemMask != ENCODE_MEM && aliasCondition != 0) {
-                bool isCheckLIRLoad = EncodingMap[checkLIR->opcode].flags &
+                bool isCheckLIRLoad = getEncoding(checkLIR->opcode)->flags &
                                       IS_LOAD;
                 if  (aliasCondition == ENCODE_LITERAL) {
                     /*
                      * Should only see literal loads in the instruction
                      * stream.
                      */
-                    assert(!(EncodingMap[checkLIR->opcode].flags &
+                    assert(!(getEncoding(checkLIR->opcode)->flags &
                              IS_STORE));
                     /* Same value && same register type */
                     if (checkLIR->aliasInfo == thisLIR->aliasInfo &&
@@ -290,7 +290,7 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
         /* Skip non-interesting instructions */
         if ((thisLIR->flags.isNop == true) ||
             isPseudoOpcode(thisLIR->opcode) ||
-            !(EncodingMap[thisLIR->opcode].flags & IS_LOAD)) {
+            !(getEncoding(thisLIR->opcode)->flags & IS_LOAD)) {
             continue;
         }
 
@@ -389,7 +389,7 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
             ArmLIR *depLIR = prevInstList[nextSlot-1];
             /* If there is ld-ld dependency, wait LDLD_DISTANCE cycles */
             if (!isPseudoOpcode(depLIR->opcode) &&
-                (EncodingMap[depLIR->opcode].flags & IS_LOAD)) {
+                (getEncoding(depLIR->opcode)->flags & IS_LOAD)) {
                 firstSlot -= LDLD_DISTANCE;
             }
             /*
@@ -409,7 +409,7 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
                      * If the first instruction is a load, don't hoist anything
                      * above it since it is unlikely to be beneficial.
                      */
-                    if (EncodingMap[curLIR->opcode].flags & IS_LOAD) continue;
+                    if (getEncoding(curLIR->opcode)->flags & IS_LOAD) continue;
                     /*
                      * Need to unconditionally break here even if the hoisted
                      * distance is greater than LD_LATENCY (ie more than enough
@@ -429,7 +429,7 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
                  * the remaining instructions are less than LD_LATENCY.
                  */
                 if (((curLIR->useMask & prevLIR->defMask) &&
-                     (EncodingMap[prevLIR->opcode].flags & IS_LOAD)) ||
+                     (getEncoding(prevLIR->opcode)->flags & IS_LOAD)) ||
                     (slot < LD_LATENCY)) {
                     break;
                 }

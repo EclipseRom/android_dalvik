@@ -745,6 +745,7 @@ typedef enum ArmTargetOptHints {
 } ArmTargetOptHints;
 
 extern ArmEncodingMap EncodingMap[kArmLast];
+extern ArmEncodingMap* getEncoding(ArmOpcode opcode);
 
 /*
  * Each instance of this struct holds a pseudo or real LIR instruction:

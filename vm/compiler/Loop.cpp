@@ -349,7 +349,7 @@ static bool doLoopBodyCodeMotion(CompilationUnit *cUnit)
     for (mir = loopBody->firstMIRInsn; mir; mir = mir->next) {
         DecodedInstruction *dInsn = &mir->dalvikInsn;
         int dfAttributes =
-            dvmCompilerDataFlowAttributes[mir->dalvikInsn.opcode];
+            dvmGetDexOptAttributes(mir->dalvikInsn.opcode);
 
         /* Skip extended MIR instructions */
         if (dInsn->opcode >= kNumPackedOpcodes) continue;

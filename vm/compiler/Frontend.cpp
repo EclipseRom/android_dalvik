@@ -219,11 +219,11 @@ static int analyzeInlineTarget(DecodedInstruction *dalvikInsn, int attributes,
     }
 
     if (!(flags & kInstrCanReturn)) {
-        if (!(dvmCompilerDataFlowAttributes[dalvikOpcode] &
+        if (!(dvmGetDexOptAttributes(dalvikOpcode) &
               DF_IS_GETTER)) {
             attributes &= ~METHOD_IS_GETTER;
         }
-        if (!(dvmCompilerDataFlowAttributes[dalvikOpcode] &
+        if (!(dvmGetDexOptAttributes(dalvikOpcode) &
               DF_IS_SETTER)) {
             attributes &= ~METHOD_IS_SETTER;
         }
@@ -1355,6 +1355,21 @@ bool dvmCompileMethod(const Method *method, JitTranslationInfo *info)
     return false;
 }
 
+/*
+ * Utility funtion to check the DEX opcode for correctness
+ */
+__attribute__((weak)) bool dvmVerifyDex(BasicBlock *curBlock, const u2* codePtr, MIR *insn)
+{
+    bool result = false;
+    if (insn) {
+        if ((insn->dalvikInsn.opcode >= OP_NOP) &&
+            (insn->dalvikInsn.opcode < OP_UNUSED_FF)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 /* Extending the trace by crawling the code from curBlock */
 static bool exhaustTrace(CompilationUnit *cUnit, BasicBlock *curBlock)
 {
@@ -1392,6 +1407,7 @@ static bool exhaustTrace(CompilationUnit *cUnit, BasicBlock *curBlock)
         if (width == 0)
             break;
 
+        dvmVerifyDex(curBlock, codePtr + width, insn);
         dvmCompilerAppendMIR(curBlock, insn);
 
         codePtr += width;
@@ -1826,6 +1842,8 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
         /* The trace should never incude instruction data */
         assert(width);
         insn->width = width;
+
+        dvmVerifyDex(curBB, codePtr + width, insn);
         traceSize += width;
         dvmCompilerAppendMIR(curBB, insn);
         cUnit.numInsts++;

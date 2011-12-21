@@ -3625,16 +3625,30 @@ static bool handleExecuteInlineC(CompilationUnit *cUnit, MIR *mir)
     dvmCompilerClobber(cUnit, r7);
     int offset = offsetof(Thread, interpSave.retval);
     opRegRegImm(cUnit, kOpAdd, r4PC, r6SELF, offset);
-#ifdef INLINE_ARG5
-            if( dInsn->vA == 5 ){
-                loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, 4), r7);
+#ifdef INLINE_ARG_EXPANDED
+            switch( dInsn->vA ){
+                case 7:
+                    loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, 6), r7);
+                    opImm(cUnit, kOpPush, (1<<r7));
+                    /* fall through */
+                case 6:
+                    loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, 5), r7);
+                    opImm(cUnit, kOpPush, (1<<r7));
+                    /* fall through */
+                case 5:
+                    loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, 4), r7);
             }
-#endif
+            opImm(cUnit, kOpPush, (1<<r4PC) | (1<<r7));
+            LOAD_FUNC_ADDR(cUnit, r4PC, fn);
+            genExportPC(cUnit, mir);
+#else
     opImm(cUnit, kOpPush, (1<<r4PC) | (1<<r7));
     LOAD_FUNC_ADDR(cUnit, r4PC, fn);
     genExportPC(cUnit, mir);
-#ifdef INLINE_ARG5
-            if( dInsn->vA == 5 ){
+#endif
+
+#ifdef INLINE_ARG_EXPANDED
+            if( dInsn->vA >= 5  ){
                 for (i=0; i < 4; i++) {
                     loadValueDirect(cUnit, dvmCompilerGetSrc(cUnit, mir, i), i);
                 }
@@ -3649,7 +3663,15 @@ static bool handleExecuteInlineC(CompilationUnit *cUnit, MIR *mir)
     }
 #endif
     opReg(cUnit, kOpBlx, r4PC);
+#ifdef INLINE_ARG_EXPANDED
+    if( dInsn->vA > 5 ){
+        opRegImm(cUnit, kOpAdd, r13sp, 16);
+    } else {
+        opRegImm(cUnit, kOpAdd, r13sp, 8);
+    }
+#else
     opRegImm(cUnit, kOpAdd, r13sp, 8);
+#endif
     /* NULL? */
     ArmLIR *branchOver = genCmpImmBranch(cUnit, kArmCondNe, r0, 0);
     loadConstant(cUnit, r0, (int) (cUnit->method->insns + mir->offset));

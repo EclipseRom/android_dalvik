@@ -7300,11 +7300,11 @@ dalvik_inst:
     bne     .LOP_EXECUTE_INLINE_RANGE_debugmode       @ yes - take slow path
 .LOP_EXECUTE_INLINE_RANGE_resume:
     add     r1, rSELF, #offThread_retval  @ r1<- &self->retval
-    sub     sp, sp, #8                  @ make room for arg, +64 bit align
+    sub     sp, sp, #16                  @ make room for arg, +64 bit align
     mov     r0, rINST, lsr #8           @ r0<- AA
     str     r1, [sp]                    @ push &self->retval
     bl      .LOP_EXECUTE_INLINE_RANGE_continue        @ make call; will return after
-    add     sp, sp, #8                  @ pop stack
+    add     sp, sp, #16                  @ pop stack
     cmp     r0, #0                      @ test boolean result of inline
     beq     common_exceptionThrown      @ returned false, handle exception
     FETCH_ADVANCE_INST(3)               @ advance rPC, load rINST
@@ -9453,7 +9453,7 @@ d2l_doconv:
      *   interleave a little better.  Increases code size.
      */
 .LOP_EXECUTE_INLINE_continue:
-#ifdef INLINE_ARG5
+#ifdef INLINE_ARG_EXPANDED
     rsb     r0, r0, #5                  @ r0<- 4-r0
     FETCH(rINST, 2)                     @ rINST<- FEDC
     add     pc, pc, r0, lsl #3          @ computed goto, 2 instrs each
@@ -9562,6 +9562,59 @@ d2l_doconv:
      *  lr = return addr, above  [DO NOT bl out of here w/o preserving LR]
      */
 .LOP_EXECUTE_INLINE_RANGE_continue:
+#ifdef INLINE_ARG_EXPANDED
+    rsb     r0, r0, #7                  @ r0<- 4-r0
+    FETCH(r9, 2)                        @ r9<- CCCC
+    add     pc, pc, r0, lsl #3          @ computed goto, 2 instrs each
+    bl      common_abort                @ (skipped due to ARM prefetch)
+8:  b      .LOP_EXECUTE_INLINE_RANGE_load_arg6
+    bl      common_abort                @ (skipped due to ARM prefetch)
+7:  b      .LOP_EXECUTE_INLINE_RANGE_load_arg5
+    bl      common_abort                @ (skipped due to ARM prefetch)
+6:  b      .LOP_EXECUTE_INLINE_RANGE_load_arg4
+    bl      common_abort                @ (skipped due to ARM prefetch)
+4:  add     ip, r9, #3                  @ base+3
+    GET_VREG(r3, ip)                    @ r3<- vBase[3]
+3:  add     ip, r9, #2                  @ base+2
+    GET_VREG(r2, ip)                    @ r2<- vBase[2]
+2:  add     ip, r9, #1                  @ base+1
+    GET_VREG(r1, ip)                    @ r1<- vBase[1]
+1:  add     ip, r9, #0                  @ (nop)
+    GET_VREG(r0, ip)                    @ r0<- vBase[0]
+0:
+    cmp     r10, #100                   @ INLINE_EX_START in vm/InlineNative.h
+    bge     99f
+    ldr     r9, .LOP_EXECUTE_INLINE_RANGE_table       @ table of InlineOperation
+5:  add     r9, pc
+    ldr     pc, [r9, r10, lsl #4]       @ sizeof=16, "func" is first entry
+99:
+    push    {r0, r1, r2, r3, lr}
+    mov     r0, r10
+    bl      dvmInlineOpsExFunc
+    mov     r9, r0
+    pop     {r0, r1, r2, r3, lr}
+    mov     pc, r9
+    @ (not reached)
+
+.LOP_EXECUTE_INLINE_RANGE_load_arg6:
+    add     ip, r9, #6                  @ base+3
+    GET_VREG(r3, ip)                    @ r3<- vBase[3]
+    str     r3, [sp, #12]
+    b      7b
+
+.LOP_EXECUTE_INLINE_RANGE_load_arg5:
+    add     ip, r9, #5                  @ base+3
+    GET_VREG(r3, ip)                    @ r3<- vBase[3]
+    str     r3, [sp, #8]
+    b      6b
+
+.LOP_EXECUTE_INLINE_RANGE_load_arg4:
+    add     ip, r9, #4                  @ base+3
+    GET_VREG(r3, ip)                    @ r3<- vBase[3]
+    str     r3, [sp, #4]
+    b      4b
+
+#else
     rsb     r0, r0, #4                  @ r0<- 4-r0
     FETCH(r9, 2)                        @ r9<- CCCC
     add     pc, pc, r0, lsl #3          @ computed goto, 2 instrs each
@@ -9588,7 +9641,7 @@ d2l_doconv:
     pop     {r0, r1, r2, r3, lr}
     mov     pc, r9
     @ (not reached)
-
+#endif
 
     /*
      * We're debugging or profiling.

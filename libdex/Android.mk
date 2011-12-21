@@ -15,8 +15,8 @@
 LOCAL_PATH:= $(call my-dir)
 
 ifeq ($(ARCH_ARM_HAVE_ARMV7A),true)
-    target_inline_arg5_flag := -DINLINE_ARG5
-    host_inline_arg5_flag := -DINLINE_ARG5
+    target_inline_arg5_flag := -DINLINE_ARG_EXPANDED
+    host_inline_arg5_flag := -DINLINE_ARG_EXPANDED
 else
     target_inline_arg5_flag :=
     host_inline_arg5_flag :=

@@ -1,6 +1,6 @@
 HANDLE_OPCODE(OP_EXECUTE_INLINE /*vB, {vD, vE, vF, vG}, inline@CCCC*/)
     {
-#ifdef INLINE_ARG5
+#ifdef INLINE_ARG_EXPANDED
         u4 arg0, arg1, arg2, arg3, arg4;
         arg0 = arg1 = arg2 = arg3 = arg4 = 0;
 
@@ -53,7 +53,7 @@ HANDLE_OPCODE(OP_EXECUTE_INLINE /*vB, {vD, vE, vF, vG}, inline@CCCC*/)
             }
         }
 
-#else //ifdef INLINE_ARG5
+#else //ifdef INLINE_ARG_EXPANDED
         /*
          * This has the same form as other method calls, but we ignore
          * the 5th argument (vA).  This is chiefly because the first four
@@ -108,7 +108,7 @@ HANDLE_OPCODE(OP_EXECUTE_INLINE /*vB, {vD, vE, vF, vG}, inline@CCCC*/)
             if (!dvmPerformInlineOp4Std(arg0, arg1, arg2, arg3, &retval, ref))
                 GOTO_exceptionThrown();
         }
-#endif //ifdef INLINE_ARG5
+#endif //ifdef INLINE_ARG_EXPANDED
     }
     FINISH(3);
 OP_END

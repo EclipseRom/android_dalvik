@@ -940,7 +940,7 @@ bool dvmPerformInlineOp4Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     return result;
 }
 
-#ifdef INLINE_ARG5
+#ifdef INLINE_ARG_EXPANDED
 bool dvmPerformInlineOp5Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     JValue* pResult, int opIndex, u4 arg4)
 {
@@ -959,6 +959,28 @@ bool dvmPerformInlineOp5Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     TRACE_METHOD_ENTER(self, method);
     bool result = ((InlineOp5Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
         pResult, arg4);
+    TRACE_METHOD_EXIT(self, method);
+    return result;
+}
+
+bool dvmPerformInlineOp7Dbg(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
+    JValue* pResult, int opIndex, u4 arg4, u4 arg5, u4 arg6)
+{
+    Method* method = dvmResolveInlineNative(opIndex);
+    if (method == NULL) {
+        if (opIndex >= INLINE_EX_START)
+            return ((InlineOp7Func)(*dvmInlineOpsExFunc(opIndex)))(arg0, arg1, arg2, arg3,
+                pResult, arg4, arg5, arg6);
+
+
+        return ((InlineOp7Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
+            pResult, arg4, arg5, arg6);
+    }
+
+    Thread* self = dvmThreadSelf();
+    TRACE_METHOD_ENTER(self, method);
+    bool result = ((InlineOp7Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3,
+        pResult, arg4, arg5, arg6);
     TRACE_METHOD_EXIT(self, method);
     return result;
 }

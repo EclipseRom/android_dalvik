@@ -46,7 +46,7 @@
      *   interleave a little better.  Increases code size.
      */
 .L${opcode}_continue:
-#ifdef INLINE_ARG5
+#ifdef INLINE_ARG_EXPANDED
     rsb     r0, r0, #5                  @ r0<- 4-r0
     FETCH(rINST, 2)                     @ rINST<- FEDC
     add     pc, pc, r0, lsl #3          @ computed goto, 2 instrs each

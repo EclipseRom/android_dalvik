@@ -200,6 +200,7 @@ typedef struct LocalOptsFuncMap{
     void (*storeValueWide) (struct CompilationUnit *cUnit,
                             struct  RegLocation rlDest,
                             struct RegLocation rlSrc);
+    void (*genSuspendPoll) (struct CompilationUnit *cUnit, struct MIR *mir);
 } LocalOptsFuncMap;
 
 extern LocalOptsFuncMap localOptsFunMap;

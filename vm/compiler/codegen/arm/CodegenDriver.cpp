@@ -1449,6 +1449,20 @@ static void genSuspendPoll(CompilationUnit *cUnit, MIR *mir)
     genRegImmCheck(cUnit, kArmCondNe, rTemp, 0, mir->offset, NULL);
 }
 
+__attribute__((weak)) void dvmGenSuspendPoll(CompilationUnit *cUnit,
+                                            BasicBlock *bb,
+                                            MIR *mir,
+                                            bool genSuspendPollEnabled)
+{
+    /* backward branch? */
+    bool backwardBranch = (bb->taken->startOffset <= mir->offset);
+
+    if (backwardBranch &&
+        (genSuspendPollEnabled || cUnit->jitMode == kJitLoop)) {
+        genSuspendPoll(cUnit, mir);
+    }
+}
+
 /*
  * The following are the first-level codegen routines that analyze the format
  * of each bytecode then either dispatch special purpose codegen routines
@@ -1458,13 +1472,7 @@ static void genSuspendPoll(CompilationUnit *cUnit, MIR *mir)
 static bool handleFmt10t_Fmt20t_Fmt30t(CompilationUnit *cUnit, MIR *mir,
                                        BasicBlock *bb, ArmLIR *labelList)
 {
-    /* backward branch? */
-    bool backwardBranch = (bb->taken->startOffset <= mir->offset);
-
-    if (backwardBranch &&
-        (gDvmJit.genSuspendPoll || cUnit->jitMode == kJitLoop)) {
-        genSuspendPoll(cUnit, mir);
-    }
+    dvmGenSuspendPoll(cUnit, bb, mir, gDvmJit.genSuspendPoll);
 
     int numPredecessors = dvmCountSetBits(bb->taken->predecessors);
     /*
@@ -2102,13 +2110,7 @@ static bool handleFmt21t(CompilationUnit *cUnit, MIR *mir, BasicBlock *bb,
 {
     Opcode dalvikOpcode = mir->dalvikInsn.opcode;
     ArmConditionCode cond;
-    /* backward branch? */
-    bool backwardBranch = (bb->taken->startOffset <= mir->offset);
-
-    if (backwardBranch &&
-        (gDvmJit.genSuspendPoll || cUnit->jitMode == kJitLoop)) {
-        genSuspendPoll(cUnit, mir);
-    }
+    dvmGenSuspendPoll(cUnit, bb, mir, gDvmJit.genSuspendPoll);
 
     RegLocation rlSrc = dvmCompilerGetSrc(cUnit, mir, 0);
     rlSrc = loadValue(cUnit, rlSrc, kCoreReg);
@@ -2603,13 +2605,7 @@ static bool handleFmt22t(CompilationUnit *cUnit, MIR *mir, BasicBlock *bb,
 {
     Opcode dalvikOpcode = mir->dalvikInsn.opcode;
     ArmConditionCode cond;
-    /* backward branch? */
-    bool backwardBranch = (bb->taken->startOffset <= mir->offset);
-
-    if (backwardBranch &&
-        (gDvmJit.genSuspendPoll || cUnit->jitMode == kJitLoop)) {
-        genSuspendPoll(cUnit, mir);
-    }
+    dvmGenSuspendPoll(cUnit, bb, mir, gDvmJit.genSuspendPoll);
 
     RegLocation rlSrc1 = dvmCompilerGetSrc(cUnit, mir, 0);
     RegLocation rlSrc2 = dvmCompilerGetSrc(cUnit, mir, 1);
@@ -4874,5 +4870,6 @@ LocalOptsFuncMap localOptsFunMap = {
     loadConstantNoClobber,
     loadConstant,
     storeValueWide,
+    genSuspendPoll,
 };
 

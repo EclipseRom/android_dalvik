@@ -75,6 +75,7 @@ include $(BUILD_SHARED_LIBRARY)
 include $(LOCAL_PATH)/ReconfigureDvm.mk
 LOCAL_CFLAGS += -UNDEBUG -DDEBUG=1 -DLOG_NDEBUG=1 -DWITH_DALVIK_ASSERT \
                 -DWITH_JIT_TUNING $(target_smp_flag)
+LOCAL_CFLAGS += $(target_inline_arg5_flag)
 # TODO: split out the asflags.
 LOCAL_ASFLAGS := $(LOCAL_CFLAGS)
 LOCAL_MODULE := libdvm_assert
@@ -87,6 +88,7 @@ ifneq ($(dvm_arch),mips)    # MIPS support for self-verification is incomplete
     include $(LOCAL_PATH)/ReconfigureDvm.mk
     LOCAL_CFLAGS += -UNDEBUG -DDEBUG=1 -DLOG_NDEBUG=1 -DWITH_DALVIK_ASSERT \
                     -DWITH_SELF_VERIFICATION $(target_smp_flag)
+    LOCAL_CFLAGS += $(target_inline_arg5_flag)
     # TODO: split out the asflags.
     LOCAL_ASFLAGS := $(LOCAL_CFLAGS)
     LOCAL_MODULE := libdvm_sv

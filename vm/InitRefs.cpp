@@ -477,6 +477,10 @@ static bool verifyStringOffsets() {
     return ok;
 }
 
+__attribute__((weak)) bool verifyExtra(){
+    return true;
+}
+
 /* (documented in header) */
 bool dvmFindRequiredClassesAndMembers() {
     /*
@@ -491,7 +495,8 @@ bool dvmFindRequiredClassesAndMembers() {
         && initDirectMethodReferences()
         && initVirtualMethodOffsets()
         && initFinalizerReference()
-        && verifyStringOffsets();
+        && verifyStringOffsets()
+        && verifyExtra();
 }
 
 /* (documented in header) */

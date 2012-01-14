@@ -50,6 +50,11 @@ static bool rewriteExecuteInlineRange(Method* method, u2* insns,
 static void rewriteReturnVoid(Method* method, u2* insns);
 static bool needsReturnBarrier(Method* method);
 
+__attribute__((weak)) Method* dvmFindInlinableMethodEx(const char* classDescriptor,
+    const char* methodName, const char* methodSignature){
+
+    return dvmFindInlinableMethod(classDescriptor, methodName, methodSignature);
+}
 
 /*
  * Create a table of inline substitutions.  Sets gDvm.inlineSubs.
@@ -112,7 +117,7 @@ bool dvmCreateInlineSubsTable()
 
     tableIndex = 0;
     for (i = 0; i < count; i++) {
-        Method* method = dvmFindInlinableMethod(ops[i].classDescriptor,
+        Method* method = dvmFindInlinableMethodEx(ops[i].classDescriptor,
             ops[i].methodName, ops[i].methodSignature);
         if (method == NULL) {
             /*
@@ -1009,6 +1014,8 @@ static bool rewriteInvokeObjectInit(Method* method, u2* insns)
 
         LOGVV("DexOpt: replaced Object.<init> in %s.%s",
             method->clazz->descriptor, method->name);
+    }else{
+        return false;
     }
 
     return true;

@@ -297,9 +297,17 @@ static inline ArmLIR *genTrap(CompilationUnit *cUnit, int dOffset,
     return genCheckCommon(cUnit, dOffset, branch, pcrLabel);
 }
 
+__attribute__((weak)) bool genIGetWideThumb2(CompilationUnit *cUnit, MIR *mir, int fieldOffset)
+{
+    return false;
+}
+
 /* Load a wide field from an object instance */
 static void genIGetWide(CompilationUnit *cUnit, MIR *mir, int fieldOffset)
 {
+    if (genIGetWideThumb2(cUnit, mir, fieldOffset))
+        return;
+
     RegLocation rlObj = dvmCompilerGetSrc(cUnit, mir, 0);
     RegLocation rlDest = dvmCompilerGetDestWide(cUnit, mir, 0, 1);
     RegLocation rlResult;
@@ -321,9 +329,17 @@ static void genIGetWide(CompilationUnit *cUnit, MIR *mir, int fieldOffset)
     storeValueWide(cUnit, rlDest, rlResult);
 }
 
+__attribute__((weak)) bool genIPutWideThumb2(CompilationUnit *cUnit, MIR *mir, int fieldOffset)
+{
+    return false;
+}
+
 /* Store a wide field to an object instance */
 static void genIPutWide(CompilationUnit *cUnit, MIR *mir, int fieldOffset)
 {
+    if (genIPutWideThumb2(cUnit, mir, fieldOffset))
+        return;
+
     RegLocation rlSrc = dvmCompilerGetSrcWide(cUnit, mir, 0, 1);
     RegLocation rlObj = dvmCompilerGetSrc(cUnit, mir, 2);
     rlObj = loadValue(cUnit, rlObj, kCoreReg);
@@ -398,6 +414,12 @@ static void genIPut(CompilationUnit *cUnit, MIR *mir, OpSize size,
     }
 }
 
+__attribute__((weak)) bool genArrayGetThumb2(CompilationUnit *cUnit, MIR *mir, OpSize size,
+                        RegLocation rlArray, RegLocation rlIndex,
+                        RegLocation rlDest, int scale)
+{
+    return false;
+}
 
 /*
  * Generate array load
@@ -406,6 +428,10 @@ static void genArrayGet(CompilationUnit *cUnit, MIR *mir, OpSize size,
                         RegLocation rlArray, RegLocation rlIndex,
                         RegLocation rlDest, int scale)
 {
+    if(genArrayGetThumb2(cUnit, mir, size, rlArray, rlIndex,
+                        rlDest, scale))
+        return;
+
     RegisterClass regClass = dvmCompilerRegClassBySize(size);
     int lenOffset = OFFSETOF_MEMBER(ArrayObject, length);
     int dataOffset = OFFSETOF_MEMBER(ArrayObject, contents);
@@ -467,6 +493,13 @@ static void genArrayGet(CompilationUnit *cUnit, MIR *mir, OpSize size,
     }
 }
 
+__attribute__((weak)) bool genArrayPutThumb2(CompilationUnit *cUnit, MIR *mir, OpSize size,
+                        RegLocation rlArray, RegLocation rlIndex,
+                        RegLocation rlSrc, int scale)
+{
+    return false;
+}
+
 /*
  * Generate array store
  *
@@ -475,6 +508,10 @@ static void genArrayPut(CompilationUnit *cUnit, MIR *mir, OpSize size,
                         RegLocation rlArray, RegLocation rlIndex,
                         RegLocation rlSrc, int scale)
 {
+    if(genArrayPutThumb2(cUnit, mir, size, rlArray, rlIndex,
+                        rlSrc, scale))
+        return;
+
     RegisterClass regClass = dvmCompilerRegClassBySize(size);
     int lenOffset = OFFSETOF_MEMBER(ArrayObject, length);
     int dataOffset = OFFSETOF_MEMBER(ArrayObject, contents);
@@ -4906,5 +4943,13 @@ LocalOptsFuncMap localOptsFunMap = {
     loadConstant,
     storeValueWide,
     genSuspendPoll,
+    storeBaseDispWide,
+    loadBaseDispWide,
+    opRegRegImm,
+    opRegRegReg,
+    loadBaseIndexed,
+    storeBaseIndexed,
+    dvmCompilerRegClassBySize,
+    encodeShift,
 };
 

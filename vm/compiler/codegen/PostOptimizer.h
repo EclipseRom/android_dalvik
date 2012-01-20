@@ -201,6 +201,42 @@ typedef struct LocalOptsFuncMap{
                             struct  RegLocation rlDest,
                             struct RegLocation rlSrc);
     void (*genSuspendPoll) (struct CompilationUnit *cUnit, struct MIR *mir);
+    struct ArmLIR *(*storeBaseDispWide)(struct CompilationUnit *cUnit,
+                                        int rBase,
+                                        int displacement,
+                                        int rSrcLo,
+                                        int rSrcHi);
+    struct ArmLIR *(*loadBaseDispWide)(struct CompilationUnit *cUnit,
+                                        MIR *mir,
+                                        int rBase,
+                                        int displacement,
+                                        int rDestLo,
+                                        int rDestHi,
+                                        int sReg);
+    struct ArmLIR *(*opRegRegImm)(struct CompilationUnit *cUnit,
+                                    enum OpKind op,
+                                    int rDest,
+                                    int rSrc1,
+                                    int value);
+    struct ArmLIR *(*opRegRegReg)(struct CompilationUnit *cUnit,
+                                    enum OpKind op,
+                                    int rDest,
+                                    int rSrc1,
+                                    int rSrc2);
+    struct ArmLIR *(*loadBaseIndexed)(struct CompilationUnit *cUnit,
+                                        int rBase,
+                                        int rIndex,
+                                        int rDest,
+                                        int scale,
+                                        enum OpSize size);
+    struct ArmLIR *(*storeBaseIndexed)(struct CompilationUnit *cUnit,
+                                        int rBase,
+                                        int rIndex,
+                                        int rSrc,
+                                        int scale,
+                                        enum OpSize size);
+    enum RegisterClass (*dvmCompilerRegClassBySize)(enum OpSize size);
+    int (*encodeShift)(int code, int amount);
 } LocalOptsFuncMap;
 
 extern LocalOptsFuncMap localOptsFunMap;

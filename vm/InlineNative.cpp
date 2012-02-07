@@ -824,6 +824,12 @@ __attribute__((weak)) int dvmInlineOpsExVerify(int opcode)
 {
     return 0;
 }
+
+__attribute__((weak)) InlineExtraCheck dvmGetInlineOpExtraCheck(int idx)
+{
+    return 0;
+}
+
 }
 
 Method* dvmFindInlinableMethod(const char* classDescriptor,

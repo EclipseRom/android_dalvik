@@ -33,6 +33,7 @@
 struct InlineSub {
     Method* method;
     int     inlineIdx;
+    InlineExtraCheck extraCheck;
 };
 
 
@@ -93,6 +94,8 @@ bool dvmCreateInlineSubsTable()
 
         table[tableIndex].method = method;
         table[tableIndex].inlineIdx = i;
+        /* There is no extra check for these */
+        table[tableIndex].extraCheck = 0;
         tableIndex++;
     }
 
@@ -130,6 +133,7 @@ bool dvmCreateInlineSubsTable()
 
         table[tableIndex].method = method;
         table[tableIndex].inlineIdx = i + INLINE_EX_START;
+        table[tableIndex].extraCheck = dvmGetInlineOpExtraCheck(i);
         tableIndex++;
     }
 
@@ -1121,16 +1125,20 @@ process:
         }
         */
         if (inlineSubs->method == calledMethod) {
-            assert((insns[0] & 0xff) == OP_INVOKE_DIRECT ||
-                   (insns[0] & 0xff) == OP_INVOKE_STATIC ||
-                   (insns[0] & 0xff) == OP_INVOKE_VIRTUAL);
-            updateOpcode(method, insns, OP_EXECUTE_INLINE);
-            dvmUpdateCodeUnit(method, insns+1, (u2) inlineSubs->inlineIdx);
+            if ((inlineSubs->extraCheck == 0) ||
+                (inlineSubs->extraCheck(method, calledMethod, insns))) {
+                assert((insns[0] & 0xff) == OP_INVOKE_DIRECT ||
+                       (insns[0] & 0xff) == OP_INVOKE_STATIC ||
+                       (insns[0] & 0xff) == OP_INVOKE_VIRTUAL);
+                updateOpcode(method, insns, OP_EXECUTE_INLINE);
+                dvmUpdateCodeUnit(method, insns+1, (u2) inlineSubs->inlineIdx);
 
-            //ALOGI("DexOpt: execute-inline %s.%s --> %s.%s",
-            //    method->clazz->descriptor, method->name,
-            //    calledMethod->clazz->descriptor, calledMethod->name);
-            return true;
+                //ALOGI("DexOpt: execute-inline %s.%s --> %s.%s",
+                //    method->clazz->descriptor, method->name,
+                //    calledMethod->clazz->descriptor, calledMethod->name);
+                return true;
+            }
+            return false;
         }
 
         inlineSubs++;
@@ -1169,16 +1177,20 @@ static bool rewriteExecuteInlineRange(Method* method, u2* insns,
 process:
     while (inlineSubs->method != NULL) {
         if (inlineSubs->method == calledMethod) {
-            assert((insns[0] & 0xff) == OP_INVOKE_DIRECT_RANGE ||
-                   (insns[0] & 0xff) == OP_INVOKE_STATIC_RANGE ||
-                   (insns[0] & 0xff) == OP_INVOKE_VIRTUAL_RANGE);
-            updateOpcode(method, insns, OP_EXECUTE_INLINE_RANGE);
-            dvmUpdateCodeUnit(method, insns+1, (u2) inlineSubs->inlineIdx);
+            if ((inlineSubs->extraCheck == 0) ||
+                (inlineSubs->extraCheck(method, calledMethod, insns))) {
+                assert((insns[0] & 0xff) == OP_INVOKE_DIRECT_RANGE ||
+                       (insns[0] & 0xff) == OP_INVOKE_STATIC_RANGE ||
+                       (insns[0] & 0xff) == OP_INVOKE_VIRTUAL_RANGE);
+                updateOpcode(method, insns, OP_EXECUTE_INLINE_RANGE);
+                dvmUpdateCodeUnit(method, insns+1, (u2) inlineSubs->inlineIdx);
 
-            //ALOGI("DexOpt: execute-inline/range %s.%s --> %s.%s",
-            //    method->clazz->descriptor, method->name,
-            //    calledMethod->clazz->descriptor, calledMethod->name);
-            return true;
+                //ALOGI("DexOpt: execute-inline/range %s.%s --> %s.%s",
+                //    method->clazz->descriptor, method->name,
+                //    calledMethod->clazz->descriptor, calledMethod->name);
+                return true;
+            }
+            return false;
         }
 
         inlineSubs++;

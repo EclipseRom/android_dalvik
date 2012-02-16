@@ -67,6 +67,12 @@ static void convertMemOpIntoMove(CompilationUnit *cUnit, ArmLIR *origLIR,
     dvmCompilerInsertLIRAfter((LIR *) origLIR, (LIR *) moveLIR);
 }
 
+/* placeholder function for extra check on current lir */
+__attribute__((weak)) bool checkSpecialLIR(ArmLIR **lir)
+{
+    return false;
+}
+
 /*
  * Perform a pass of top-down walk, from the second-last instruction in the
  * superblock, to eliminate redundant loads and stores.
@@ -101,6 +107,7 @@ static void applyLoadStoreElimination(CompilationUnit *cUnit,
         /* Skip non-interesting instructions */
         if ((thisLIR->flags.isNop == true) ||
             isPseudoOpcode(thisLIR->opcode) ||
+            checkSpecialLIR(&thisLIR) ||
             !(getEncoding(thisLIR->opcode)->flags & (IS_LOAD | IS_STORE))) {
             continue;
         }
@@ -260,6 +267,7 @@ static void applyLoadStoreElimination(CompilationUnit *cUnit,
             } else if (!checkLIR->flags.isNop) {
                 sinkDistance++;
             }
+            checkSpecialLIR(&checkLIR);
         }
     }
 }
@@ -290,6 +298,7 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
         /* Skip non-interesting instructions */
         if ((thisLIR->flags.isNop == true) ||
             isPseudoOpcode(thisLIR->opcode) ||
+            checkSpecialLIR(&thisLIR) ||
             !(getEncoding(thisLIR->opcode)->flags & IS_LOAD)) {
             continue;
         }
@@ -323,6 +332,8 @@ static void applyLoadHoisting(CompilationUnit *cUnit,
              * outdated and misleading).
              */
             if (checkLIR->flags.isNop) continue;
+
+            checkSpecialLIR(&checkLIR);
 
             u8 checkMemMask = checkLIR->defMask & ENCODE_MEM;
             u8 aliasCondition = stopUseAllMask & checkMemMask;

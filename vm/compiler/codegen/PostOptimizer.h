@@ -237,6 +237,17 @@ typedef struct LocalOptsFuncMap{
                                         enum OpSize size);
     enum RegisterClass (*dvmCompilerRegClassBySize)(enum OpSize size);
     int (*encodeShift)(int code, int amount);
+    struct ArmLIR *(*opRegReg)(struct CompilationUnit *cUnit,
+                                enum OpKind op,
+                                int rDestSrc1,
+                                int rSrc2);
+    struct ArmLIR *(*opCondBranch)(struct CompilationUnit *cUnit,
+                                    enum ArmConditionCode cc);
+    struct ArmLIR *(*genIT)(struct CompilationUnit *cUnit,
+                            enum ArmConditionCode code,
+                            const char *guide);
+    void (*genBarrier)(struct CompilationUnit *cUnit);
+    int (*modifiedImmediate)(u4 value);
 } LocalOptsFuncMap;
 
 extern LocalOptsFuncMap localOptsFunMap;

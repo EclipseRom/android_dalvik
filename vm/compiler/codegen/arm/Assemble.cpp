@@ -1385,6 +1385,8 @@ void dvmCompilerAssembleLIR(CompilationUnit *cUnit, JitTranslationInfo *info)
         armLIR->generic.offset = offset;
         if (armLIR->opcode >= 0 && !armLIR->flags.isNop) {
             armLIR->flags.size = getEncoding(armLIR->opcode)->size * 2;
+            if(armLIR->flags.size==0)
+                armLIR->flags.isNop=true;
             offset += armLIR->flags.size;
         } else if (armLIR->opcode == kArmPseudoPseudoAlign4) {
             if (offset & 0x2) {

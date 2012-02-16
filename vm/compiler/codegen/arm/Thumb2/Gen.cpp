@@ -352,6 +352,13 @@ static void genMonitor(CompilationUnit *cUnit, MIR *mir)
         genMonitorExit(cUnit, mir);
 }
 
+__attribute__((weak)) bool genCmpLongThumb2(CompilationUnit *cUnit, MIR *mir,
+                                    RegLocation rlDest, RegLocation rlSrc1,
+                                    RegLocation rlSrc2)
+{
+    return false;
+}
+
 /*
  * 64-bit 3way compare function.
  *     mov   r7, #-1
@@ -371,6 +378,9 @@ static void genCmpLong(CompilationUnit *cUnit, MIR *mir,
                        RegLocation rlDest, RegLocation rlSrc1,
                        RegLocation rlSrc2)
 {
+    if(genCmpLongThumb2(cUnit, mir, rlDest, rlSrc1, rlSrc2))
+        return;
+
     RegLocation rlTemp = LOC_C_RETURN; // Just using as template, will change
     ArmLIR *target1;
     ArmLIR *target2;

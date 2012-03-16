@@ -124,11 +124,9 @@ bool dvmCreateInlineSubsTable()
             ops[i].methodName, ops[i].methodSignature);
         if (method == NULL) {
             /*
-             * Not expected.
-             * Ignore all extensions
+             * End of ext table
              */
-            free(table);
-            return true;
+            break;
         }
 
         table[tableIndex].method = method;

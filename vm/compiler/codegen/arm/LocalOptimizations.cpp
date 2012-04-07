@@ -73,6 +73,17 @@ __attribute__((weak)) bool checkSpecialLIR(ArmLIR **lir)
     return false;
 }
 
+__attribute__((weak)) void dumpBothLIRs(CompilationUnit *cUnit,
+                                        ArmLIR *thisLIR, ArmLIR *checkLIR)
+{
+    if(cUnit->printMe){
+        ALOGD("thisLIR");
+        dvmDumpLIRInsn((LIR*)thisLIR,0);
+        ALOGD("checkLIR");
+        dvmDumpLIRInsn((LIR*)checkLIR,0);
+    }
+}
+
 /*
  * Perform a pass of top-down walk, from the second-last instruction in the
  * superblock, to eliminate redundant loads and stores.
@@ -223,6 +234,7 @@ static void applyLoadStoreElimination(CompilationUnit *cUnit,
                          * case for this so we just stop here to be
                          * conservative.
                          */
+                        dumpBothLIRs(cUnit,thisLIR, checkLIR);
                         stopHere = true;
                     }
                 }

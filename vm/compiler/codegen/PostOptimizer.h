@@ -248,6 +248,12 @@ typedef struct LocalOptsFuncMap{
                             const char *guide);
     void (*genBarrier)(struct CompilationUnit *cUnit);
     int (*modifiedImmediate)(u4 value);
+    struct ArmLIR *(*genRegImmCheck)(struct CompilationUnit *cUnit,
+                                    enum ArmConditionCode cond,
+                                    int reg,
+                                    int checkValue,
+                                    int dOffset,
+                                    ArmLIR *pcrLabel);
 } LocalOptsFuncMap;
 
 extern LocalOptsFuncMap localOptsFunMap;

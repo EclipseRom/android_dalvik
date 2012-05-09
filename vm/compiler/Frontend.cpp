@@ -1371,6 +1371,14 @@ __attribute__((weak)) bool dvmVerifyDex(CompilationUnit *cUnit, BasicBlock *curB
     return result;
 }
 
+/* check for monitor instructions in the trace */
+__attribute__((weak)) void dvmCompilerCheckMIR(CompilationUnit *cUnit, MIR *mir)
+{
+    if (mir->dalvikInsn.opcode == OP_MONITOR_ENTER ||
+        mir->dalvikInsn.opcode == OP_MONITOR_EXIT)
+        cUnit->hasMonitor = true;
+}
+
 /* Extending the trace by crawling the code from curBlock */
 static bool exhaustTrace(CompilationUnit *cUnit, BasicBlock *curBlock)
 {
@@ -1413,6 +1421,8 @@ static bool exhaustTrace(CompilationUnit *cUnit, BasicBlock *curBlock)
 
         codePtr += width;
         int flags = dexGetFlagsFromOpcode(insn->dalvikInsn.opcode);
+
+        dvmCompilerCheckMIR(cUnit, insn);
 
         /* Stop extending the trace after seeing these instructions */
         if (flags & (kInstrCanReturn | kInstrCanSwitch | kInstrInvoke)) {
@@ -1480,6 +1490,8 @@ static bool compileLoop(CompilationUnit *cUnit, unsigned int startOffset,
 #endif
 
     cUnit->jitMode = kJitLoop;
+    cUnit->hasMonitor = false;
+    cUnit->hasVolatile = false;
 
     /* Initialize the block list */
     dvmInitGrowableList(&cUnit->blockList, 4);
@@ -1866,6 +1878,8 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
             callsiteInfo->method = calleeMethod;
             insn->meta.callsiteInfo = callsiteInfo;
         }
+
+        dvmCompilerCheckMIR(&cUnit, insn);
 
         /* Instruction limit reached - terminate the trace here */
         if (cUnit.numInsts >= numMaxInsts) {

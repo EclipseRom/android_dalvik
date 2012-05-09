@@ -1274,6 +1274,8 @@ bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
                                                       false);
             mir->ssaRep->fpUse = (bool *)dvmCompilerNew(sizeof(bool) * numUses,
                                                 false);
+            mir->ssaRep->wideUse = (bool *)dvmCompilerNew(sizeof(bool) * numUses,
+                                                false);
         }
 
         int numDefs = 0;
@@ -1291,6 +1293,8 @@ bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
                                                       false);
             mir->ssaRep->fpDef = (bool *)dvmCompilerNew(sizeof(bool) * numDefs,
                                                         false);
+            mir->ssaRep->wideDef = (bool *)dvmCompilerNew(sizeof(bool) * numDefs,
+                                                        false);
         }
 
         DecodedInstruction *dInsn = &mir->dalvikInsn;
@@ -1299,37 +1303,48 @@ bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
             numUses = 0;
             if (dfAttributes & DF_UA) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_A;
+                mir->ssaRep->wideUse[numUses] = false;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vA, numUses++);
             } else if (dfAttributes & DF_UA_WIDE) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_A;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vA, numUses++);
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_A;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vA+1, numUses++);
             }
             if (dfAttributes & DF_UB) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_B;
+                mir->ssaRep->wideUse[numUses] = false;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vB, numUses++);
             } else if (dfAttributes & DF_UB_WIDE) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_B;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vB, numUses++);
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_B;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vB+1, numUses++);
             }
             if (dfAttributes & DF_UC) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_C;
+                mir->ssaRep->wideUse[numUses] = false;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vC, numUses++);
             } else if (dfAttributes & DF_UC_WIDE) {
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_C;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vC, numUses++);
                 mir->ssaRep->fpUse[numUses] = dfAttributes & DF_FP_C;
+                mir->ssaRep->wideUse[numUses] = true;
                 handleSSAUse(cUnit, mir->ssaRep->uses, dInsn->vC+1, numUses++);
             }
         }
         if (dfAttributes & DF_HAS_DEFS) {
             mir->ssaRep->fpDef[0] = dfAttributes & DF_FP_A;
+            mir->ssaRep->wideDef[0] = dfAttributes & DF_DA_WIDE;
             handleSSADef(cUnit, mir->ssaRep->defs, dInsn->vA, 0);
             if (dfAttributes & DF_DA_WIDE) {
                 mir->ssaRep->fpDef[1] = dfAttributes & DF_FP_A;
+                mir->ssaRep->wideDef[1] = true;
                 handleSSADef(cUnit, mir->ssaRep->defs, dInsn->vA+1, 1);
             }
         }
@@ -1352,7 +1367,7 @@ bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
 /* Setup a constant value for opcodes thare have the DF_SETS_CONST attribute */
 static void setConstant(CompilationUnit *cUnit, int ssaReg, int value)
 {
-    dvmSetBit(cUnit->isConstantV, ssaReg);
+    dvmCompilerSetBit(cUnit->isConstantV, ssaReg);
     cUnit->constantValues[ssaReg] = value;
 }
 
@@ -1494,7 +1509,7 @@ bool dvmCompilerFindInductionVariables(struct CompilationUnit *cUnit,
                         break;
                 }
                 if (deltaIsConstant) {
-                    dvmSetBit(isIndVarV, mir->ssaRep->uses[0]);
+                    dvmCompilerSetBit(isIndVarV, mir->ssaRep->uses[0]);
                     InductionVariableInfo *ivInfo = (InductionVariableInfo *)
                         dvmCompilerNew(sizeof(InductionVariableInfo),
                                        false);
@@ -1567,7 +1582,7 @@ bool dvmCompilerFindInductionVariables(struct CompilationUnit *cUnit,
 
             if (cIsConstant) {
                 unsigned int i;
-                dvmSetBit(isIndVarV, mir->ssaRep->defs[0]);
+                dvmCompilerSetBit(isIndVarV, mir->ssaRep->defs[0]);
                 InductionVariableInfo *ivInfo = (InductionVariableInfo *)
                     dvmCompilerNew(sizeof(InductionVariableInfo),
                                    false);

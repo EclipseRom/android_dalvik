@@ -222,12 +222,26 @@ static bool inlineSetter(CompilationUnit *cUnit,
     return true;
 }
 
+/* skip inlining certain method */
+__attribute__((weak)) bool dvmSkipInlineThisMethod(CompilationUnit *cUnit,
+                                                const Method *calleeMethod,
+                                                MIR *invokeMIR,
+                                                BasicBlock *invokeBB,
+                                                bool isPredicted,
+                                                bool isRange)
+{
+    return false;
+}
+
 static bool tryInlineSingletonCallsite(CompilationUnit *cUnit,
                                        const Method *calleeMethod,
                                        MIR *invokeMIR,
                                        BasicBlock *invokeBB,
                                        bool isRange)
 {
+    if (dvmSkipInlineThisMethod(cUnit, calleeMethod, invokeMIR, invokeBB, false, isRange))
+        return true;
+
     /* Not a Java method */
     if (dvmIsNativeMethod(calleeMethod)) return false;
 
@@ -276,6 +290,9 @@ static bool tryInlineVirtualCallsite(CompilationUnit *cUnit,
                                      BasicBlock *invokeBB,
                                      bool isRange)
 {
+    if (dvmSkipInlineThisMethod(cUnit, calleeMethod, invokeMIR, invokeBB, true, isRange))
+        return true;
+
     /* Not a Java method */
     if (dvmIsNativeMethod(calleeMethod)) return false;
 

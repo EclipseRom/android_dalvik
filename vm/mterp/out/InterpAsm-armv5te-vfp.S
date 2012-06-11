@@ -9532,18 +9532,9 @@ d2l_doconv:
 1:  and     ip, rINST, #0x000f          @ isolate C
     ldr     r0, [rFP, ip, lsl #2]       @ r0<- vC
 0:
-    cmp     r10, #100                   @ INLINE_EX_START in vm/InlineNative.h
-    bge     99f
     ldr     rINST, .LOP_EXECUTE_INLINE_table    @ table of InlineOperation
 5:  add     rINST, pc
     ldr     pc, [rINST, r10, lsl #4]    @ sizeof=16, "func" is first entry
-99:
-    push    {r0, r1, r2, r3, lr}
-    mov     r0, r10
-    bl      dvmInlineOpsExFunc
-    mov     r9, r0
-    pop     {r0, r1, r2, r3, lr}
-    mov     pc, r9
     @ (not reached)
 
 .LOP_EXECUTE_INLINE_load_arg4:
@@ -9567,18 +9558,9 @@ d2l_doconv:
 1:  and     ip, rINST, #0x000f          @ isolate C
     ldr     r0, [rFP, ip, lsl #2]       @ r0<- vC
 0:
-    cmp     r10, #100                   @ INLINE_EX_START in vm/InlineNative.h
-    bge     99f
     ldr     rINST, .LOP_EXECUTE_INLINE_table    @ table of InlineOperation
 5:  add     rINST, pc
     ldr     pc, [rINST, r10, lsl #4]    @ sizeof=16, "func" is first entry
-99:
-    push    {r0, r1, r2, r3, lr}
-    mov     r0, r10
-    bl      dvmInlineOpsExFunc
-    mov     r9, r0
-    pop     {r0, r1, r2, r3, lr}
-    mov     pc, r9
     @ (not reached)
 #endif
 
@@ -9645,18 +9627,9 @@ d2l_doconv:
 1:  add     ip, r9, #0                  @ (nop)
     GET_VREG(r0, ip)                    @ r0<- vBase[0]
 0:
-    cmp     r10, #100                   @ INLINE_EX_START in vm/InlineNative.h
-    bge     99f
     ldr     r9, .LOP_EXECUTE_INLINE_RANGE_table       @ table of InlineOperation
 5:  add     r9, pc
     ldr     pc, [r9, r10, lsl #4]       @ sizeof=16, "func" is first entry
-99:
-    push    {r0, r1, r2, r3, lr}
-    mov     r0, r10
-    bl      dvmInlineOpsExFunc
-    mov     r9, r0
-    pop     {r0, r1, r2, r3, lr}
-    mov     pc, r9
     @ (not reached)
 
 .LOP_EXECUTE_INLINE_RANGE_load_arg6:
@@ -9691,18 +9664,9 @@ d2l_doconv:
 1:  add     ip, r9, #0                  @ (nop)
     GET_VREG(r0, ip)                    @ r0<- vBase[0]
 0:
-    cmp     r10, #100                   @ INLINE_EX_START in vm/InlineNative.h
-    bge     99f
     ldr     r9, .LOP_EXECUTE_INLINE_RANGE_table       @ table of InlineOperation
 5:  add     r9, pc
     ldr     pc, [r9, r10, lsl #4]       @ sizeof=16, "func" is first entry
-99:
-    push    {r0, r1, r2, r3, lr}
-    mov     r0, r10
-    bl      dvmInlineOpsExFunc
-    mov     r9, r0
-    pop     {r0, r1, r2, r3, lr}
-    mov     pc, r9
     @ (not reached)
 #endif
 

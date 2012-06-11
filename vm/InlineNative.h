@@ -39,12 +39,6 @@ typedef bool (*InlineOp5Func)(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
 typedef bool (*InlineOp7Func)(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     JValue* pResult, u4 arg4, u4 arg5, u4 arg6);
 #endif
-
-/*
- * Handle extra checks for inline operations
- */
-typedef bool (*InlineExtraCheck)(const void*, const void*, const u2*);
-
 /*
  * Table of inline operations.
  *
@@ -99,7 +93,6 @@ enum NativeInlineOps {
     INLINE_STRICT_MATH_MIN_INT = 26,
     INLINE_STRICT_MATH_MAX_INT = 27,
     INLINE_STRICT_MATH_SQRT = 28,
-    INLINE_EX_START = 100,
 };
 
 /*
@@ -107,11 +100,6 @@ enum NativeInlineOps {
  */
 const InlineOperation* dvmGetInlineOpsTable(void);
 int dvmGetInlineOpsTableLength(void);
-
-extern "C" InlineOperation* dvmGetInlineOpsTableEx(int *length);
-extern "C" InlineOp4Func dvmInlineOpsExFunc(int opcode);
-extern "C" int dvmInlineOpsExVerify(int opcode);
-extern "C" InlineExtraCheck dvmGetInlineOpExtraCheck(int idx);
 
 /*
  * The table, exposed so we can access it with C inlines.  Prefer access
@@ -132,9 +120,6 @@ extern const InlineOperation gDvmInlineOpsTable[];
 INLINE bool dvmPerformInlineOp4Std(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     JValue* pResult, int opIndex)
 {
-    if (opIndex >= INLINE_EX_START)
-        return (*dvmInlineOpsExFunc(opIndex))(arg0, arg1, arg2, arg3, pResult);
-
     return (*gDvmInlineOpsTable[opIndex].func)(arg0, arg1, arg2, arg3, pResult);
 }
 
@@ -152,18 +137,12 @@ INLINE bool dvmPerformInlineOp4Std(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
 INLINE bool dvmPerformInlineOp5Std(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     JValue* pResult, int opIndex, u4 arg4)
 {
-    if (opIndex >= INLINE_EX_START)
-        return ((InlineOp5Func)(*dvmInlineOpsExFunc(opIndex)))(arg0, arg1, arg2, arg3, pResult, arg4);
-
     return ((InlineOp5Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3, pResult, arg4);
 }
 
 INLINE bool dvmPerformInlineOp7Std(u4 arg0, u4 arg1, u4 arg2, u4 arg3,
     JValue* pResult, int opIndex, u4 arg4, u4 arg5, u4 arg6)
 {
-    if (opIndex >= INLINE_EX_START)
-        return ((InlineOp7Func)(*dvmInlineOpsExFunc(opIndex)))(arg0, arg1, arg2, arg3, pResult, arg4, arg5, arg6);
-
     return ((InlineOp7Func)(*gDvmInlineOpsTable[opIndex].func))(arg0, arg1, arg2, arg3, pResult, arg4, arg5, arg6);
 }
 

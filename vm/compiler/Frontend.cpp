@@ -219,11 +219,11 @@ static int analyzeInlineTarget(DecodedInstruction *dalvikInsn, int attributes,
     }
 
     if (!(flags & kInstrCanReturn)) {
-        if (!(dvmGetDexOptAttributes(dalvikOpcode) &
+        if (!(dvmGetDexOptAttributes(dalvikInsn) &
               DF_IS_GETTER)) {
             attributes &= ~METHOD_IS_GETTER;
         }
-        if (!(dvmGetDexOptAttributes(dalvikOpcode) &
+        if (!(dvmGetDexOptAttributes(dalvikInsn) &
               DF_IS_SETTER)) {
             attributes &= ~METHOD_IS_SETTER;
         }

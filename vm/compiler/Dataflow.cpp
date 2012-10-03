@@ -821,7 +821,7 @@ __attribute__((weak)) int dvmGetDexOptAttributes(const DecodedInstruction* instr
     int result = 0;
     if (instr) {
         Opcode  opcode = instr->opcode;
-        if ((opcode >= OP_NOP) && (opcode <= OP_UNUSED_FF)) {
+        if ((opcode >= OP_NOP) && (opcode < (Opcode)kMirOpLast)) {
             result = dvmCompilerDataFlowAttributes[opcode];
         }
     }

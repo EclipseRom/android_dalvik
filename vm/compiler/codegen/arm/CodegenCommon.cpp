@@ -178,6 +178,10 @@ static void setupResourceMasks(ArmLIR *lir)
         lir->defMask |= ENCODE_CCODE;
     }
 
+    if (flags & SETS_FPSTATUS) {
+        lir->defMask |= ENCODE_FP_STATUS;
+    }
+
     /* Conservatively treat the IT block */
     if (flags & IS_IT) {
         lir->defMask = ENCODE_ALL;
@@ -211,6 +215,10 @@ static void setupResourceMasks(ArmLIR *lir)
 
     if (flags & USES_CCODES) {
         lir->useMask |= ENCODE_CCODE;
+    }
+
+    if (flags & USES_FPSTATUS) {
+        lir->useMask |= ENCODE_FP_STATUS;
     }
 
     /* Fixup for kThumbPush/lr and kThumbPop/pc */

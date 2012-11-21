@@ -518,6 +518,7 @@ static void genHoistedChecks(CompilationUnit *cUnit)
                 dvmCompilerAbort(cUnit);
             }
         }
+        cUnit->hasHoistedChecks=true;
     }
 }
 

@@ -206,6 +206,11 @@ typedef struct LocalOptsFuncMap{
                                         int displacement,
                                         int rSrcLo,
                                         int rSrcHi);
+    struct ArmLIR *(*storeBaseDisp)(struct CompilationUnit *cUnit,
+                                        int rBase,
+                                        int displacement,
+                                        int rSrc,
+                                        OpSize size);
     struct ArmLIR *(*loadBaseDispWide)(struct CompilationUnit *cUnit,
                                         MIR *mir,
                                         int rBase,

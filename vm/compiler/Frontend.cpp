@@ -1371,12 +1371,23 @@ __attribute__((weak)) bool dvmVerifyDex(CompilationUnit *cUnit, BasicBlock *curB
     return result;
 }
 
-/* check for monitor instructions in the trace */
-__attribute__((weak)) void dvmCompilerCheckMIR(CompilationUnit *cUnit, MIR *mir)
+/* dump simple trace property */
+__attribute__((weak)) void dvmDumpLoopTraceStats(CompilationUnit *cUnit)
 {
-    if (mir->dalvikInsn.opcode == OP_MONITOR_ENTER ||
-        mir->dalvikInsn.opcode == OP_MONITOR_EXIT)
-        cUnit->hasMonitor = true;
+    if(cUnit->printMe){
+        ALOGV("hasInvoke %d",cUnit->hasInvoke);
+    }
+}
+
+/* dump reglocation info of a loop trace */
+__attribute__((weak)) void dvmCompilerDumpRegLocationInfo(CompilationUnit *cUnit)
+{
+    if(cUnit->printMe){
+        int i;
+        for (i=0; i< cUnit->numSSARegs; i++) {
+            ALOGV("LOC %d:%d",i,cUnit->regLocation[i].sRegLow);
+        }
+    }
 }
 
 /* Extending the trace by crawling the code from curBlock */
@@ -1421,8 +1432,6 @@ static bool exhaustTrace(CompilationUnit *cUnit, BasicBlock *curBlock)
 
         codePtr += width;
         int flags = dexGetFlagsFromOpcode(insn->dalvikInsn.opcode);
-
-        dvmCompilerCheckMIR(cUnit, insn);
 
         /* Stop extending the trace after seeing these instructions */
         if (flags & (kInstrCanReturn | kInstrCanSwitch | kInstrInvoke)) {
@@ -1490,8 +1499,9 @@ static bool compileLoop(CompilationUnit *cUnit, unsigned int startOffset,
 #endif
 
     cUnit->jitMode = kJitLoop;
-    cUnit->hasMonitor = false;
-    cUnit->hasVolatile = false;
+
+    /* reset number of insns in the trace */
+    cUnit->numInsts=0;
 
     /* Initialize the block list */
     dvmInitGrowableList(&cUnit->blockList, 4);
@@ -1560,6 +1570,8 @@ static bool compileLoop(CompilationUnit *cUnit, unsigned int startOffset,
     if (!dvmCompilerBuildLoop(cUnit))
         goto bail;
 
+    dvmDumpLoopTraceStats(cUnit);
+
     dvmCompilerLoopOpt(cUnit);
 
     /*
@@ -1576,6 +1588,8 @@ static bool compileLoop(CompilationUnit *cUnit, unsigned int startOffset,
 
     /* Allocate Registers using simple local allocation scheme */
     dvmCompilerLocalRegAlloc(cUnit);
+
+    dvmCompilerDumpRegLocationInfo(cUnit);
 
     /* Convert MIR to LIR, etc. */
     dvmCompilerMIR2LIR(cUnit);
@@ -1831,6 +1845,7 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
     curBB = dvmCompilerNewBB(kEntryBlock, numBlocks++);
     dvmInsertGrowableList(blockList, (intptr_t) curBB);
     curBB->startOffset = curOffset;
+    cUnit.entryBlock = curBB;
 
     entryCodeBB = dvmCompilerNewBB(kDalvikByteCode, numBlocks++);
     dvmInsertGrowableList(blockList, (intptr_t) entryCodeBB);
@@ -1861,7 +1876,8 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
         dvmVerifyDex(&cUnit, curBB, codePtr + width, insn);
         traceSize += width;
         dvmCompilerAppendMIR(curBB, insn);
-        cUnit.numInsts++;
+        /* assign seqNum to each insn in the trace */
+        insn->seqNum = cUnit.numInsts++;
 
         int flags = dexGetFlagsFromOpcode(insn->dalvikInsn.opcode);
 
@@ -1878,8 +1894,6 @@ bool dvmCompileTrace(JitTraceDescription *desc, int numMaxInsts,
             callsiteInfo->method = calleeMethod;
             insn->meta.callsiteInfo = callsiteInfo;
         }
-
-        dvmCompilerCheckMIR(&cUnit, insn);
 
         /* Instruction limit reached - terminate the trace here */
         if (cUnit.numInsts >= numMaxInsts) {

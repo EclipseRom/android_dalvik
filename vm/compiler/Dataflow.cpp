@@ -1233,6 +1233,16 @@ static void dataFlowSSAFormat3RC(CompilationUnit *cUnit, MIR *mir)
     }
 }
 
+/* check for invoke instructions in the loop trace */
+__attribute__((weak)) void dvmCompilerCheckMIR(CompilationUnit *cUnit, MIR *mir)
+{
+    int flags = dexGetFlagsFromOpcode(mir->dalvikInsn.opcode);
+
+    if (flags & kInstrInvoke) {
+        cUnit->hasInvoke = true;
+    }
+}
+
 /* Entry function to convert a block into SSA representation */
 bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
 {
@@ -1241,6 +1251,9 @@ bool dvmCompilerDoSSAConversion(CompilationUnit *cUnit, BasicBlock *bb)
     if (bb->dataFlowInfo == NULL) return false;
 
     for (mir = bb->firstMIRInsn; mir; mir = mir->next) {
+
+        dvmCompilerCheckMIR(cUnit, mir);
+
         mir->ssaRep = (struct SSARepresentation *)
             dvmCompilerNew(sizeof(SSARepresentation), true);
 

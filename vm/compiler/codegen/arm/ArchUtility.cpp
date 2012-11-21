@@ -189,6 +189,15 @@ static void buildInsnString(const char *fmt, ArmLIR *lir, char* buf,
                            case kArmCondMi:
                                strcpy(tbuf, "mi");
                                break;
+                           case kArmCondPl:
+                               strcpy(tbuf, "pl");
+                               break;
+                           case kArmCondHi:
+                               strcpy(tbuf, "hi");
+                               break;
+                           case kArmCondLs:
+                               strcpy(tbuf, "ls");
+                               break;
                            default:
                                strcpy(tbuf, "");
                                break;

@@ -235,6 +235,10 @@ ifeq ($(dvm_arch),arm)
   #LOCAL_CFLAGS += -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
   LOCAL_CFLAGS += -Werror
   MTERP_ARCH_KNOWN := true
+
+  # Debuggerd support
+  LOCAL_SRC_FILES += DalvikCrashDump.cpp
+
   # Select architecture-specific sources (armv5te, armv7-a, etc.)
   LOCAL_SRC_FILES += \
 		arch/arm/CallOldABI.S \

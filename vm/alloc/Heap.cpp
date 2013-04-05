@@ -35,6 +35,8 @@
 #include <limits.h>
 #include <errno.h>
 #include <cutils/process_name.h>
+#include <cutils/properties.h>
+
 
 #include <cutils/trace.h>
 
@@ -186,6 +188,8 @@ static void *tryMalloc(size_t size)
 {
     void *ptr;
     int result = -1;
+    char* hprof_file = NULL;
+    char prop_value[PROPERTY_VALUE_MAX] = {'\0'};
 
 //TODO: figure out better heuristics
 //    There will be a lot of churn if someone allocates a bunch of
@@ -260,20 +264,46 @@ static void *tryMalloc(size_t size)
     LOGE_HEAP("Out of memory on a %zd-byte allocation.", size);
 //TODO: tell the HeapSource to dump its state
     dvmDumpThread(dvmThreadSelf(), false);
-    LOGE_HEAP("Generating hprof for process: %s PID: %d",
-                get_process_name(),getpid());
-    dvmUnlockHeap();
-    /* remove the /data/misc/app_oom.hprof if already present */
-    remove("/data/misc/app_oom.hprof");
-    result = hprofDumpHeap("/data/misc/app_oom.hprof", -1, false);
-    dvmLockMutex(&gDvm.gcHeapLock);
-    if (result != 0) {
-        /* ideally we'd throw something more specific based on actual failure */
-        dvmThrowRuntimeException(
-        "Failure during heap dump; check log output for details");
-        LOGE_HEAP(" hprofDumpHeap failed with result: %d ",result);
+
+    /* Read the property to check whether hprof should be generated or not */
+    property_get("dalvik.debug.oom",prop_value,"0");
+
+    if(atoi(prop_value) == 1) {
+        LOGE_HEAP("Generating hprof for process: %s PID: %d",
+                    get_process_name(),getpid());
+        dvmUnlockHeap();
+
+        /* allocate memory for hprof file name. Allocate approx 30 bytes.
+         * 11 byte for directory path, 10 bytes for pid, 6 bytes for
+         * extension + "\0'.
+         */
+        hprof_file = (char*) malloc (sizeof(char) * 30);
+
+        /* creation of hprof will fail if /data/misc permission is not set
+         * to 0777.
+         */
+
+        if(hprof_file) {
+            snprintf(hprof_file,30,"/data/misc/%d.hprof",getpid());
+            LOGE_HEAP("Generating hprof in file: %s",hprof_file );
+
+            result = hprofDumpHeap(hprof_file, -1, false);
+            free(hprof_file);
+        } else {
+            LOGE_HEAP("Failed to allocate memory for file name."
+                      "Generating hprof in default file: /data/misc/app_oom.hprof");
+            result = hprofDumpHeap("/data/misc/app_oom.hprof", -1, false);
+        }
+
+        dvmLockMutex(&gDvm.gcHeapLock);
+
+        if (result != 0) {
+            /* ideally we'd throw something more specific based on actual failure */
+            dvmThrowRuntimeException(
+                "Failure during heap dump; check log output for details");
+            LOGE_HEAP(" hprofDumpHeap failed with result: %d ",result);
+        }
     }
-    LOGE_HEAP("After hprofDumpHeap for process");
 
     return NULL;
 }

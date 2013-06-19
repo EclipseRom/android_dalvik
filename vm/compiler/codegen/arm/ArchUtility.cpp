@@ -189,15 +189,6 @@ static void buildInsnString(const char *fmt, ArmLIR *lir, char* buf,
                            case kArmCondMi:
                                strcpy(tbuf, "mi");
                                break;
-                           case kArmCondPl:
-                               strcpy(tbuf, "pl");
-                               break;
-                           case kArmCondHi:
-                               strcpy(tbuf, "hi");
-                               break;
-                           case kArmCondLs:
-                               strcpy(tbuf, "ls");
-                               break;
                            default:
                                strcpy(tbuf, "");
                                break;
@@ -300,26 +291,12 @@ void dvmDumpResourceMask(LIR *lir, u8 mask, const char *prefix)
 #define DUMP_RESOURCE_MASK(X)
 #define DUMP_SSA_REP(X)
 
-/*
- * Decodes generic ARM opcodes
- */
-static void printDefaultInstr(ArmLIR *lir, unsigned char *baseAddr)
-{
-    char buf[256];
-    char opName[256];
-    int  offset = lir->generic.offset;
-
-    buildInsnString(getEncoding(lir->opcode)->name, lir, opName, baseAddr, 256);
-    buildInsnString(getEncoding(lir->opcode)->fmt,  lir, buf,    baseAddr, 256);
-    ALOGD("%p (%04x): %-8s%s%s",
-         baseAddr + offset, offset, opName, buf,
-         lir->flags.isNop ? "(nop)" : "");
-}
-
 /* Pretty-print a LIR instruction */
 void dvmDumpLIRInsn(LIR *arg, unsigned char *baseAddr)
 {
     ArmLIR *lir = (ArmLIR *) arg;
+    char buf[256];
+    char opName[256];
     int offset = lir->generic.offset;
     int dest = lir->operands[0];
     const bool dumpNop = false;
@@ -381,10 +358,6 @@ void dvmDumpLIRInsn(LIR *arg, unsigned char *baseAddr)
             ALOGD("-------- reconstruct dalvik PC : 0x%04x @ +0x%04x", dest,
                  lir->operands[1]);
             break;
-        case kArmPseudoPCReconstructionCellExtended:
-            ALOGD("-------- reconstruct dalvik PC : 0x%04x @ +0x%04x (extended)\n", dest,
-                 lir->operands[1]);
-            break;
         case kArmPseudoPCReconstructionBlockLabel:
             /* Do nothing */
             break;
@@ -399,7 +372,13 @@ void dvmDumpLIRInsn(LIR *arg, unsigned char *baseAddr)
             if (lir->flags.isNop && !dumpNop) {
                 break;
             }
-            printDefaultInstr(lir, baseAddr);
+            buildInsnString(EncodingMap[lir->opcode].name, lir, opName,
+                            baseAddr, 256);
+            buildInsnString(EncodingMap[lir->opcode].fmt, lir, buf, baseAddr,
+                            256);
+            ALOGD("%p (%04x): %-8s%s%s",
+                 baseAddr + offset, offset, opName, buf,
+                 lir->flags.isNop ? "(nop)" : "");
             break;
     }
 

@@ -190,8 +190,6 @@ Object* dvmAllocObject(ClassObject* clazz, int flags)
     if (newObj != NULL) {
         DVM_OBJECT_INIT(newObj, clazz);
         dvmTrackAllocation(clazz, clazz->objectSize);   /* notify DDMS */
-        // Add barrier to force all metadata writes to main memory to complete
-        ANDROID_MEMBAR_FULL();
     }
 
     return newObj;
@@ -236,9 +234,6 @@ Object* dvmCloneObject(Object* obj, int flags)
     }
 
     dvmTrackAllocation(clazz, size);    /* notify DDMS */
-
-    // Add barrier to force all metadata writes to main memory to complete
-    ANDROID_MEMBAR_FULL();
 
     return copy;
 }

@@ -153,7 +153,7 @@ static void checkForDominanceFrontier(BasicBlock *domBB,
     if (succBB->iDom != domBB &&
         succBB->blockType == kDalvikByteCode &&
         succBB->hidden == false) {
-        dvmCompilerSetBit(domBB->domFrontier, succBB->id);
+        dvmSetBit(domBB->domFrontier, succBB->id);
     }
 }
 
@@ -253,7 +253,7 @@ static bool computeBlockDominators(CompilationUnit *cUnit, BasicBlock *bb)
         /* tempBlockV = tempBlockV ^ dominators */
         dvmIntersectBitVectors(tempBlockV, tempBlockV, predBB->dominators);
     }
-    dvmCompilerSetBit(tempBlockV, bb->id);
+    dvmSetBit(tempBlockV, bb->id);
     if (dvmCompareBitVectors(tempBlockV, bb->dominators)) {
         dvmCopyBitVector(bb->dominators, tempBlockV);
         return true;
@@ -317,7 +317,7 @@ static void computeDominators(CompilationUnit *cUnit)
 
     /* Set the dominator for the root node */
     dvmClearAllBits(cUnit->entryBlock->dominators);
-    dvmCompilerSetBit(cUnit->entryBlock->dominators, cUnit->entryBlock->id);
+    dvmSetBit(cUnit->entryBlock->dominators, cUnit->entryBlock->id);
 
     if (cUnit->tempBlockV == NULL) {
         cUnit->tempBlockV = dvmCompilerAllocBitVector(numTotalBlocks,
@@ -526,7 +526,7 @@ static bool insertPhiNodeOperands(CompilationUnit *cUnit, BasicBlock *bb)
             int encodedSSAValue =
                 predBB->dataFlowInfo->dalvikToSSAMap[dalvikReg];
             int ssaReg = DECODE_REG(encodedSSAValue);
-            dvmCompilerSetBit(ssaRegV, ssaReg);
+            dvmSetBit(ssaRegV, ssaReg);
         }
 
         /* Count the number of SSA registers for a Dalvik register */
